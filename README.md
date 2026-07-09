@@ -36,6 +36,32 @@ A curated list of external links: Python/NumPy/PyTorch tutorials, reference pape
 
 ---
 
+## Course Program
+
+Two-week intensive summer school, **August 17 – August 28**.
+
+### Week 1
+
+| Day | Morning Session | Afternoon Session | Homework |
+|-----|----------------|-------------------|----------|
+| Mon, Aug 17 | | | |
+| Tue, Aug 18 | | | |
+| Wed, Aug 19 | | | |
+| Thu, Aug 20 | | | |
+| Fri, Aug 21 | | | |
+
+### Week 2
+
+| Day | Morning Session | Afternoon Session | Homework |
+|-----|----------------|-------------------|----------|
+| Mon, Aug 24 | | | |
+| Tue, Aug 25 | | | |
+| Wed, Aug 26 | | | |
+| Thu, Aug 27 | | | |
+| Fri, Aug 28 | | | |
+
+---
+
 ## What Students Need for the First Class
 
 ### Hardware
