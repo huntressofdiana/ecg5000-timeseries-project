@@ -6,10 +6,11 @@ This folder contains the individual modeling projects for the summer school.
 
 Each project is placed in its own sub-folder and has a dedicated `instructions.md` describing the task, dataset, and expected deliverables.
 
-| Folder | Topic | Status |
+| Folder | Domain | Modeling Task |
 |--------|-------|--------|
 | `project_template/` | Template — copy this to start a new project | — |
 | *(to be added)* | | |
+| Ninapro | Medical | Seq2seq regression: robotic hands, grasping
 
 ## Working on a Project
 
