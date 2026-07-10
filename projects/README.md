@@ -10,7 +10,7 @@ Each project is placed in its own sub-folder and has a dedicated `instructions.m
 |--------|-------|--------|
 | `project_template/` | Template — copy this to start a new project | — |
 | *(to be added)* | | |
-| Ninapro | Medical | Seq2seq regression: robotic hands, grasping
+| Ninapro | Medical | Seq2seq regression: robotic hands, grasping; https://ninapro.hevs.ch/index.html |
 
 ## Working on a Project
 
