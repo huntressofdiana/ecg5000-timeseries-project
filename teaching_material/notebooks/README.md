@@ -1,8 +1,6 @@
 # Notebooks
 
-Jupyter notebooks accompanying the summer school lectures.
-
-Each notebook is numbered to match the corresponding lecture session.
+Jupyter notebooks accompanying the summer school lectures, numbered to match the corresponding lecture session.
 
 | File | Session | Topic |
 |------|---------|-------|
@@ -16,5 +14,5 @@ cd teaching_material/notebooks
 jupyter lab
 ```
 
-**Google Colab:**  
-Open [colab.research.google.com](https://colab.research.google.com/), choose *File → Open notebook → GitHub*, and paste the URL of the notebook.
+**Google Colab:**
+Open [colab.research.google.com](https://colab.research.google.com/), choose *File → Open notebook → GitHub*, and paste the notebook URL.
