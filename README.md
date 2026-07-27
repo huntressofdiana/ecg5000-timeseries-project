@@ -24,26 +24,28 @@ Curated external links for self study: Python, NumPy, PyTorch, and deep learning
 
 Two week intensive summer school, **August 17 to August 28, 2026**.
 
+Each day pairs lecture topics with a student work phase, and lists the expected outcome by end of day.
+
 ### Week 1
 
-| Day | Morning Session | Afternoon Session | Homework |
-|-----|-----------------|--------------------|----------|
-| Mon, Aug 17 | Orientation/Farewell | Lecture: Introduction to Deep Learning (time series data, tasks, application domains) | |
-| Tue, Aug 18 | Lecture: Introduction to Deep Learning (concepts, terminology, training basics); Lecture: Recurrent Neural Networks (RNN, LSTM, GRU) | Lecture: Transformer (self attention, positional encoding, encoder/decoder); Practical: Intro to Projects (dataset overview, group matching) | |
-| Wed, Aug 19 | Lecture: PyTorch4TS 101 (first PyTorch coding, LSTM); Practical: Students build a first prototype | Cultural Program * | Get your model running; make a prediction with it |
-| Thu, Aug 20 | Lecture: Model Training & Evaluation (early stopping, data splitting, metrics); Practical: Students build models | Lecture: Hyperparameter Optimization (grid/line search, AutoML, k fold CV); Practical: Students build models | Prepare 3 slides on your TS problem and modeling approach (structure only, no results) |
-| Fri, Aug 21 | Practical: Students build models (final prep, scoring, evaluation); Assessment: Mid Term Presentation (baseline model per group: CNN, RNN, or Transformer) | Cultural Program * | |
-| Sat, Aug 22 | Cultural Program * | | |
+| Day | Lecture Topics | Student Work | Outcome |
+|-----|-----------------|---------------|---------|
+| Mon, Aug 17 | Introduction to Deep Learning: time series data, tasks, application domains | Orientation/Welcome | Course structure and time series fundamentals understood |
+| Tue, Aug 18 | Deep Learning basics; Recurrent Neural Networks (RNN, LSTM, GRU); Transformer (self attention, positional encoding, encoder/decoder) | Intro to Projects: dataset overview, group matching | Project group and dataset assigned |
+| Wed, Aug 19 | PyTorch4TS 101: first PyTorch coding, LSTM | Build a first prototype | Model runs and produces a prediction |
+| Thu, Aug 20 | Model Training & Evaluation (early stopping, data splitting, metrics); Hyperparameter Optimization (grid/line search, AutoML, k fold CV) | Build models | 3 slide problem/approach summary ready |
+| Fri, Aug 21 | | Final prep, scoring, evaluation; Mid Term Presentation | Baseline model (CNN, RNN, or Transformer) presented |
+| Sat, Aug 22 | | Cultural Program * | |
 
 ### Week 2
 
-| Day | Morning Session | Afternoon Session | Homework |
-|-----|-----------------|--------------------|----------|
-| Mon, Aug 24 | Lecture: Advanced Concepts ((x/s/m)LSTM); Lecture: Advanced Concepts II (Mamba, S4) | Practical: Adapting an xLSTM to a Given Problem; Cultural Program * | |
-| Tue, Aug 25 | Lecture: Students Build Advanced Models (two sessions) | Lecture: Q&A and Advanced Concepts (hardware/GPU considerations); Practical: Autoregressive Inference (error accumulation, stability) | |
-| Wed, Aug 26 | Lecture: Foundation Models (self supervised learning, probabilistic forecasting); Practical: Guided Assignment Work | Cultural Program * | |
-| Thu, Aug 27 | Practical: Guided Assignment Work (two sessions) | Practical: Additional Theoretic Input (interpretability, on request); Practical: Guided Assignment Work | |
-| Fri, Aug 28 | Assessment: Presentation of Results (two sessions) | Assessment: Presentation of Results; Orientation/Farewell | |
+| Day | Lecture Topics | Student Work | Outcome |
+|-----|-----------------|---------------|---------|
+| Mon, Aug 24 | Advanced Concepts: (x/s/m)LSTM, Mamba, S4 | Adapt an xLSTM to your project | xLSTM adapted to own dataset |
+| Tue, Aug 25 | Q&A and advanced concepts: hardware/GPU considerations | Build advanced models; Autoregressive Inference | Multi step inference implemented, stability checked |
+| Wed, Aug 26 | Foundation Models: self supervised learning, probabilistic forecasting | Guided Assignment Work | Foundation model concepts understood |
+| Thu, Aug 27 | Additional Theoretic Input: interpretability, on request | Guided Assignment Work | Model, results, and slides finalized |
+| Fri, Aug 28 | | Final Presentation of Results | Project results presented to cohort |
 
 \* Activity times may vary; details announced during the program.
 
