@@ -17,21 +17,22 @@ Complete this checklist before the first session, class time is for learning, no
 
 | Tool | Version | Install |
 |------|---------|---------|
-| Python | ≥ 3.10 | [python.org](https://www.python.org/downloads/) or via `conda` |
+| Python | ≥ 3.10 | [python.org](https://www.python.org/downloads/) or via `uv`/`conda` |
+| uv | latest | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/), our recommended environment and package manager |
 | PyTorch | ≥ 2.0 | [pytorch.org/get-started](https://pytorch.org/get-started/locally/) for your OS/CUDA combo |
-| Jupyter | latest | `pip install jupyterlab` |
+| Jupyter | latest | `uv pip install jupyterlab` |
 | Git | latest | [git-scm.com](https://git-scm.com/downloads), configured with your GitHub account |
-| NumPy, pandas, Matplotlib | latest | `pip install numpy pandas matplotlib` |
+| NumPy, pandas, Matplotlib | latest | `uv pip install numpy pandas matplotlib` |
 
-Work inside a dedicated, clean virtual environment (`venv` or `conda`), kept separate from other projects.
+Work inside a dedicated, clean virtual environment, kept separate from other projects. We recommend `uv`, a fast, single tool for Python and package management; `venv` or `conda` work too.
 
-**Quick start (conda example):**
+**Quick start (uv, recommended):**
 
 ```bash
-conda create -n dl_timeseries python=3.11
-conda activate dl_timeseries
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-pip install jupyterlab numpy matplotlib pandas scikit-learn
+uv venv --python 3.11 dl_timeseries
+source dl_timeseries/bin/activate   # Windows: dl_timeseries\Scripts\activate
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+uv pip install jupyterlab numpy matplotlib pandas scikit-learn
 ```
 
 **Verify:**
@@ -50,7 +51,7 @@ You do not need to be an expert, but you should arrive comfortable with:
 
 - **Python:** variables, loops, functions, classes, and basic NumPy/pandas usage.
 - **Git:** clone, add, commit, push, pull, and working with a remote repository such as GitHub.
-- **Package management:** creating a virtual environment and installing packages with `pip` or `conda`.
+- **Package management:** creating a virtual environment and installing packages with `uv` (or `pip`/`conda`).
 - **Deep learning fundamentals:** what a neural network is (layers, weights, activation functions), and what training means (forward pass, loss function, backpropagation, gradient descent).
 - **PyTorch basics:** tensors, and how to define and train a simple model, including the training loop.
 
