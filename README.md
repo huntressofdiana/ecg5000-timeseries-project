@@ -4,18 +4,21 @@
 
 A hands on summer school covering deep learning methods for time series modeling: sequence to sequence architectures, forecasting, and data driven modeling of dynamical systems.
 
-
 ### `teaching_material/`
 
-Lecture slides and accompanying Jupyter notebooks. Notebooks can be run on Google Colab or locally (see setup below).
+Lecture slides and accompanying Jupyter notebooks. Notebooks can be run on Google Colab or locally.
 
 ### `projects/`
 
 Individual modeling projects and datasets for the summer school. See [`projects/README.md`](projects/README.md) for details.
 
-### `resources.md`
+### `PREREQUISITES.md`
 
-Curated external links: Python/NumPy/PyTorch tutorials, papers, tools, and datasets.
+What to prepare before the first session: hardware, accounts, software setup, and required skills.
+
+### `RESOURCES.md`
+
+Curated external links for self study: Python, NumPy, PyTorch, and deep learning tutorials.
 
 ## Course Program
 
@@ -40,61 +43,6 @@ Two week intensive summer school, **August 17 to August 28**.
 | Wed, Aug 26 | | | |
 | Thu, Aug 27 | | | |
 | Fri, Aug 28 | | | |
-
-## What Students Need for the First Class
-
-### Hardware
-
-- A laptop capable of running Jupyter notebooks (any OS).
-- GPU access is *not* required for the first session. Google Colab (free tier) is sufficient for all exercises.
-
-### Software (install before the first class)
-
-| Tool | Version | Install |
-|------|---------|---------|
-| Python | ≥ 3.10 | [python.org](https://www.python.org/downloads/) or via `conda` |
-| PyTorch | ≥ 2.0 | `pip install torch`, see [pytorch.org/get-started](https://pytorch.org/get-started/locally/) for your OS/CUDA combo |
-| Jupyter | latest | `pip install jupyterlab` |
-| NumPy | latest | `pip install numpy` |
-| Matplotlib | latest | `pip install matplotlib` |
-| pandas | latest | `pip install pandas` |
-
-**Quick start (recommended):**
-
-```bash
-# 1. Create a dedicated environment (conda example)
-conda create -n dl_timeseries python=3.11
-conda activate dl_timeseries
-
-# 2. Install PyTorch (CPU only, works everywhere; swap for a CUDA build if you have a GPU)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-
-# 3. Install remaining dependencies
-pip install jupyterlab numpy matplotlib pandas scikit-learn
-```
-
-### Verify your setup
-
-Run the following snippet in a Python shell or notebook cell. If it prints without errors, you are ready:
-
-```python
-import torch, numpy, matplotlib, pandas, sklearn
-print("PyTorch", torch.__version__)
-print("CUDA available:", torch.cuda.is_available())
-```
-
-### Google Colab (alternative)
-
-If local installation is not feasible, all notebooks can be opened directly in [Google Colab](https://colab.research.google.com/). A Google account is all you need, no additional setup required.
-
-### Prior knowledge
-
-Students are expected to have:
-- Basic Python programming skills (loops, functions, classes).
-- Familiarity with NumPy arrays and basic data manipulation.
-- Some exposure to machine learning concepts (helpful but not required).
-
-See [`resources.md`](resources.md) for self study material on any of the above.
 
 ## License
 
