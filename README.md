@@ -31,21 +31,21 @@ Each day has 4 slots: two in the morning, two in the afternoon. Empty cells are 
 | Day | Slot 1 | Slot 2 | Slot 3 | Slot 4 |
 |-----|--------|--------|--------|--------|
 | Mon, Aug 17 | Orientation/Welcome | Orientation/Welcome | Lecture: Introduction to Deep Learning (time series data, tasks, application domains) | |
-| Tue, Aug 18 | Lecture: Deep Learning basics | Lecture: Recurrent Neural Networks (RNN, LSTM, GRU) | Lecture: Transformer (self attention, positional encoding, encoder/decoder) | Practical: Intro to Projects (dataset overview, group matching) |
-| Wed, Aug 19 | Lecture: PyTorch4TS 101 (first PyTorch coding, LSTM) | Practical: Build a first prototype | Cultural Program * | |
-| Thu, Aug 20 | Lecture: Model Training & Evaluation (early stopping, data splitting, metrics) | Practical: Build models | Lecture: Hyperparameter Optimization (grid/line search, AutoML, k fold CV) | Practical: Build models |
-| Fri, Aug 21 | Practical: Build models (final prep, scoring, evaluation) | Assessment: Mid Term Presentation (baseline model: CNN, RNN, or Transformer) | Cultural Program * | |
+| Tue, Aug 18 | Lecture: Deep Learning basics | Lecture: Recurrent Neural Networks (RNN, LSTM, GRU) | *Lecture: Transformer (self attention, positional encoding, encoder/decoder)* | *Practical: Intro to Projects (dataset overview, group matching)* |
+| Wed, Aug 19 | *Lecture: PyTorch4TS 101 (first PyTorch coding, LSTM)* | *Practical: Build a first prototype* | Cultural Program * | |
+| Thu, Aug 20 | *Lecture: Model Training & Evaluation (early stopping, data splitting, metrics)* | *Practical: Build models* | Lecture: Hyperparameter Optimization (grid/line search, AutoML, k fold CV) | *Practical: Build models* |
+| Fri, Aug 21 | *Practical: Build models (final prep, scoring, evaluation)* | *Assessment: Mid Term Presentation (baseline model: CNN, RNN, or Transformer)* | Cultural Program * | |
 | Sat, Aug 22 | Cultural Program * | | | |
 
 ### Week 2
 
 | Day | Slot 1 | Slot 2 | Slot 3 | Slot 4 |
 |-----|--------|--------|--------|--------|
-| Mon, Aug 24 | Lecture: Advanced Concepts ((x/s/m)LSTM) | Lecture: Advanced Concepts II (Mamba, S4) | Practical: Adapting an xLSTM to a given problem | Cultural Program * |
-| Tue, Aug 25 | Lecture: Students build advanced models | Lecture: Students build advanced models | Lecture: Q&A and advanced concepts (hardware/GPU considerations) | Practical: Autoregressive Inference (error accumulation, stability) |
-| Wed, Aug 26 | Lecture: Foundation Models (self supervised learning, probabilistic forecasting) | Practical: Guided Assignment Work | Cultural Program * | |
-| Thu, Aug 27 | Practical: Guided Assignment Work | Practical: Guided Assignment Work | Practical: Additional Theoretic Input (interpretability, on request) | Practical: Guided Assignment Work |
-| Fri, Aug 28 | Assessment: Presentation of Results | Assessment: Presentation of Results | Assessment: Presentation of Results | Orientation/Farewell |
+| Mon, Aug 24 | Lecture: Advanced Concepts ((x/s/m)LSTM) | Lecture: Advanced Concepts II (Mamba, S4) | *Practical: Adapting an xLSTM to a given problem* | Cultural Program * |
+| Tue, Aug 25 | *Lecture: Students build advanced models* | Lecture: Students build advanced models | Lecture: Q&A and advanced concepts (hardware/GPU considerations) | Practical: Autoregressive Inference (error accumulation, stability) |
+| Wed, Aug 26 | Lecture: Foundation Models (self supervised learning, probabilistic forecasting) | *Practical: Guided Assignment Work* | Cultural Program * | |
+| Thu, Aug 27 | *Practical: Guided Assignment Work* | *Practical: Guided Assignment Work* | Practical: Additional Theoretic Input (interpretability, on request) | Practical: Guided Assignment Work |
+| Fri, Aug 28 | *Assessment: Presentation of Results* | *Assessment: Presentation of Results* | Assessment: Presentation of Results | Orientation/Farewell |
 
 \* Activity times may vary; details announced during the program.
 
