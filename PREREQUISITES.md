@@ -23,7 +23,7 @@ Complete this checklist before the first session, class time is for learning, no
 | Jupyter | latest | `uv pip install jupyterlab` |
 | Git | latest | [git-scm.com](https://git-scm.com/downloads), configured with your GitHub account |
 | NumPy, pandas, Matplotlib | latest | `uv pip install numpy pandas matplotlib` |
-| scikit-learn, SciPy | `uv pip install scikit-learn scipy` |
+| scikit-learn, SciPy | latest | `uv pip install scikit-learn scipy` |
 
 Work inside a dedicated, clean virtual environment, kept separate from other projects. We recommend `uv`, a fast, single tool for Python and package management; `venv` or `conda` work too.
 
