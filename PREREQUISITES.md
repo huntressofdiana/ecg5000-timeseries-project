@@ -33,7 +33,7 @@ Work inside a dedicated, clean virtual environment, kept separate from other pro
 uv venv --python 3.11 dl_timeseries
 source dl_timeseries/bin/activate   # Windows: dl_timeseries\Scripts\activate
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-uv pip install jupyterlab numpy matplotlib pandas scikit-learn
+uv pip install jupyterlab numpy matplotlib pandas scikit-learn scipy
 ```
 
 **Verify:**
