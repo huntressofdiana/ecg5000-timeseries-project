@@ -53,7 +53,7 @@ You do not need to be an expert, but you should arrive comfortable with:
 - **Git:** clone, add, commit, push, pull, and working with a remote repository such as GitHub.
 - **Package management:** creating a virtual environment and installing packages with `uv` (or `pip`/`conda`).
 - **Deep learning fundamentals:** what a neural network is (layers, weights, activation functions), and what training means (forward pass, loss function, backpropagation, gradient descent).
-- **PyTorch basics:** tensors, and how to define and train a simple model, including the training loop.
+- **PyTorch basics:** tensors, and how to define and train a simple model, including the training loop. All concepts taught in [this video](https://www.youtube.com/watch?v=_csjbnUSF0o&list=PLj6pNSgoumyd4_UFlKpuDFv9xrw4DGaJQ&index=1) should sound familiar.
 
 New to any of this? See [`RESOURCES.md`](RESOURCES.md) for tutorials, ideally before the course starts.
 

@@ -22,7 +22,7 @@ Curated tutorials, papers, and tools for self study.
 | Resource | Description |
 |----------|-------------|
 | [PyTorch Tutorials](https://pytorch.org/tutorials/) | Official tutorials |
-| [Deep Learning with PyTorch (free book)](https://pytorch.org/assets/deep-learning/Deep-Learning-with-PyTorch.pdf) | Introductory book by Stevens, Antiga & Viehmann |
+| [Deep Learning with PyTorch (free book)](https://isip.piconepress.com/courses/temple/ece_4822/resources/books/Deep-Learning-with-PyTorch.pdf) | Introductory book by Stevens, Antiga & Viehmann |
 | [fast.ai Practical Deep Learning](https://course.fast.ai/) | Code first introduction to deep learning |
 | [Andrej Karpathy: Neural Networks Zero to Hero](https://karpathy.ai/zero-to-hero.html) | Video series building neural nets from scratch |
 
