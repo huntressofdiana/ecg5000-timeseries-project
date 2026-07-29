@@ -80,7 +80,7 @@ def main():
 
     ### Load the data
     data = np.load(
-        r"C:\Users\micha\Desktop\Summer_School\datasets\lectures\damped_sine_signal.npy"
+        "teaching_material/datasets/DampedSineSignal/damped_sine_signal.npy"
     )
     print("Signal shape:", data.shape)
     time = data[:, 0]
