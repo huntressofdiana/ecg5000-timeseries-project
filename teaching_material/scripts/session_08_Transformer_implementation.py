@@ -1,11 +1,92 @@
+from typing import Tuple
+
 import numpy as np
 import torch
 import torch.nn as nn
 from matplotlib import pyplot as plt
+from scipy.io.arff import loadarff
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+)
+
+
+def plot_confusion_matrix(
+    true_indices: np.ndarray, predicted_indices: np.ndarray
+) -> None:
+    class_names = [
+        "Badminton Clear",
+        "Badminton Smash",
+        "Squash Forehand",
+        "Squash Backhand",
+    ]
+
+    cm = confusion_matrix(
+        true_indices,
+        predicted_indices,
+    )
+
+    display = ConfusionMatrixDisplay(
+        confusion_matrix=cm,
+        display_labels=class_names,
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    display.plot(
+        ax=ax,
+        cmap="Blues",
+        values_format="d",
+    )
+
+    plt.xticks(rotation=30, ha="right")
+    plt.xlabel("Predicted class")
+    plt.ylabel("True class")
+    plt.title("Confusion Matrix – RacketSports")
+    plt.tight_layout()
+    plt.show()
+
+def load_racket_sports_arff(file_path: str) -> Tuple[np.ndarray, np.ndarray]:
+    """Load the RacketSports dataset from an ARFF file.
+
+    Args:
+        file_path: Path to the RacketSports dataset.
+
+    Returns:
+        x (np.ndarray): Array of shape (n_examples, n_timesteps, n_features).
+        y (np.ndarray): Labels.
+
+    """
+
+    data, metadata = loadarff(file_path)
+
+    relational_data = data["relationalAtt"]
+    channel_names = relational_data[0].dtype.names
+
+    x = np.stack(
+        [
+            np.column_stack([sample[channel] for channel in channel_names])
+            for sample in relational_data
+        ]
+    ).astype(np.float32)
+
+    y = np.array(
+        [
+            (
+                label.decode("utf-8")
+                if isinstance(label, (bytes, np.bytes_))
+                else str(label)
+            )
+            for label in data["activity"]
+        ]
+    )
+
+    return x.transpose(0, 2, 1), y
 
 
 class BaseTransformerClassifier(nn.Module):
@@ -142,24 +223,13 @@ def main():
     torch.manual_seed(42)
 
     ### Load the data
-    train = np.load(
-        r"C:\Users\micha\Desktop\Summer_School\datasets\lectures\RacketSports_TRAIN.npz"
-    )
-
-    train_data = train["data"]  # (Samples, Time steps, Features)
-    train_labels = train[
-        "labels"
-    ]  # [Badminton Clear, Badminton Smash, Squash Forehand, Squash Backhand]
+    train_data, train_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TRAIN.arff")
 
     unique_labels = np.unique(train_labels)
     print(train_data.shape)
     print(unique_labels.shape)
 
-    test = np.load(
-        r"C:\Users\micha\Desktop\Summer_School\datasets\lectures\RacketSports_TRAIN.npz"
-    )
-    test_data = test["data"]  # (Samples, Time steps, Features)
-    test_labels = test["labels"]  # [Standing, Walking, Running, Badminton]
+    test_data, test_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TEST.arff")
 
     #### One Hot Encoding of the labels
     ohe = OneHotEncoder()
@@ -303,11 +373,6 @@ def main():
     plt.legend()
     plt.show()
 
-    all_losses = np.concatenate([train_losses, val_losses])
-
-    # np.save(r"C:\Users\micha\Desktop\Summer_School\train_loss_base.npy", all_losses)
-    ### Evaluation
-
     best_model = BaseTransformerClassifier(
         input_size=input_size,
         n_classes=n_classes,
@@ -320,7 +385,7 @@ def main():
     ).to(device)
     best_model.load_state_dict(torch.load("best_model.pth"))
 
-    model.eval()
+    best_model.eval()
     all_logits = []
     all_targets = []
 
@@ -328,7 +393,7 @@ def main():
         for x_batch, y_batch in test_loader:
             x_batch = x_batch.to(device)
 
-            logits = model(x_batch)
+            logits = best_model(x_batch)
 
             all_logits.append(logits.cpu())
             all_targets.append(y_batch.cpu())
@@ -336,21 +401,21 @@ def main():
     all_logits = torch.cat(all_logits, dim=0)
     all_targets = torch.cat(all_targets, dim=0)
 
-    predicted_indices = all_logits.argmax(dim=1)
-    true_indices = all_targets.argmax(dim=1)
+    predicted_indices = all_logits.argmax(dim=1).numpy()
+    true_indices = all_targets.argmax(dim=1).numpy()
 
     accuracy = accuracy_score(
-        true_indices.numpy(),
-        predicted_indices.numpy(),
+        true_indices,
+        predicted_indices,
     )
 
-    f1_micro = f1_score(
-        true_indices.numpy(), predicted_indices.numpy(), average="micro"
-    )
+    f1_macro = f1_score(true_indices, predicted_indices, average="macro")
 
     print(f"Accuracy: {accuracy*100:.4f}%")
 
-    print(f"F1 (Micro): {f1_micro:.4f}")
+    print(f"F1 (Macro): {f1_macro:.4f}")
+
+    plot_confusion_matrix(true_indices, predicted_indices)
 
 
 if __name__ == "__main__":
