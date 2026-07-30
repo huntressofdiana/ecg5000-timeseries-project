@@ -233,9 +233,9 @@ def main():
     )
 
     # Convert prediction back to original scale
-    test_predictions = scaler.inverse_transform(test_predictions_scaled).ravel()
+    test_predictions = scaler.inverse_transform(test_predictions_scaled)
 
-    test_target = test_signal.ravel()
+    test_target = test_signal
 
     ### Metrics
     test_mse = np.mean((test_predictions - test_target) ** 2)
@@ -251,6 +251,7 @@ def main():
     plt.plot(
         time[:train_end],
         signal[:train_end, 0],
+        linewidth=2,
         label="Training signal",
         color="black",
     )
@@ -259,6 +260,7 @@ def main():
     plt.plot(
         time[train_end - 1 :],
         signal[train_end - 1 :, 0],
+        linewidth=2,
         label="Test ground truth",
         color="tab:blue",
     )
@@ -267,7 +269,6 @@ def main():
     plt.plot(
         time[train_end:],
         test_predictions,
-        linestyle="dotted",
         linewidth=2,
         label="Test prediction",
         color="tab:orange",
