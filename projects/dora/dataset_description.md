@@ -207,14 +207,7 @@ As a project extension, a Physics-Informed Neural Network (PINN) can combine the
 
 A combined objective can be written as:
 
-$$
-\mathcal{L}
-=
-\mathcal{L}_{\mathrm{data}}
-+
-\lambda_{\mathrm{physics}}
-\mathcal{L}_{\mathrm{physics}}
-$$
+$$ \mathcal{L} = \mathcal{L}_{\mathrm{data}} + \lambda_{\mathrm{physics}} \mathcal{L}_{\mathrm{physics}} $$
 
 where:
 
@@ -224,41 +217,15 @@ where:
 
 For example, the physics residuals can be defined as:
 
-$$
-r_1(t)
-=
-\frac{\mathrm{d}\hat{q}_1}{\mathrm{d}t}
--
-\hat{q}_2
-$$
+$$ r_1(t) = \frac{\mathrm{d}\hat{q}_1}{\mathrm{d}t} - \hat{q}_2 $$
 
 and
 
-$$
-r_2(t)
-=
-\frac{\mathrm{d}\hat{q}_2}{\mathrm{d}t}
-+
-c\hat{q}_2
-+
-k\hat{q}_1
-+
-\beta\hat{q}_1^3
--
-f\cos(\omega t+\phi)
-$$
+$$ r_2(t) = \frac{\mathrm{d}\hat{q}_2}{\mathrm{d}t} + c\hat{q}_2 + k\hat{q}_1 + \beta\hat{q}_1^3 - f\cos(\omega t+\phi) $$
 
 The physics loss can then be calculated as:
 
-$$
-\mathcal{L}_{\mathrm{physics}}
-=
-\frac{1}{N}
-\sum_{i=1}^{N}
-\left(
-r_1(t_i)^2+r_2(t_i)^2
-\right)
-$$
+$$ \mathcal{L}_{\mathrm{physics}} = \frac{1}{N} \sum_{i=1}^{N} \left(r_1(t_i)^2+r_2(t_i)^2 \right) $$
 
 The project can investigate whether the physical constraint improves generalization to unseen forcing amplitudes and unseen dynamical regimes.
 
@@ -288,21 +255,11 @@ The benchmark characterizes the system response using the maximum and mean squar
 
 The maximum squared displacement is:
 
-$$
-A_{\max}
-=
-\max_{t>t^*}
-q_1^2(t)
-$$
+$$ A_{\max} = \max_{t>t^*} q_1^2(t) $$
 
 The mean squared displacement is:
 
-$$
-A_{\mathrm{mean}}
-=
-\operatorname{mean}_{t>t^*}
-q_1^2(t)
-$$
+$$ A_{\mathrm{mean}} = \operatorname{mean}_{t>t^*} q_1^2(t) $$
 
 where the transient boundary is set to:
 
