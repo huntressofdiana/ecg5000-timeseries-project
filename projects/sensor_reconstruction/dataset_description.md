@@ -40,7 +40,6 @@ The dataset supports the development of data-driven **soft-sensing** methods tha
 - **Input:** multivariate temperature signals from correctly positioned sensors.
 - **Target:** complete temperature signals of the biased sensors.
 - **Task type:** multivariate sequence-to-sequence regression.
-- **Possible models:** MLP, LSTM, GRU, Transformer, spatial interpolation, or neural operators.
 
 ## Evaluation Metrics
 
