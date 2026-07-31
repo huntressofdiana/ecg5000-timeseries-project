@@ -39,8 +39,8 @@ The original signal was obtained from the BIDMC Congestive Heart Failure Databas
 
 Typical data shapes are:
 
-- Input: $$X \in \mathbb{R}^{N \times 140 \times 1}$$
-- Labels: $$\mathbf{y} \in \left\lbrace 1,2,3,4,5 \right\rbrace^{N}$$
+- Input: $$\(X \in \mathbb{R}^{N \times 140 \times 1}\)$$
+- Labels: $$\(\mathbf{y} \in \left\lbrace 1,2,3,4,5 \right\rbrace^{N}\)$$
 
 ## Typical Modeling Task
 
