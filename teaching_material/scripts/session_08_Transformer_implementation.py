@@ -89,6 +89,42 @@ def load_racket_sports_arff(file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     return x.transpose(0, 2, 1), y
 
 
+def plot_sample(data: np.ndarray, labels: np.ndarray, sample_idx: int) -> None:
+    """Plot sample data and labels.
+    Args:
+        data (np.ndarray): Array of shape (n_examples, n_timesteps, n_features).
+        labels (np.ndarray): Array of shape (n_examples,).
+        sample_idx (int): Array of shape (n_examples,).
+    """
+    sample = data[sample_idx]
+    label = labels[sample_idx]
+
+    time = np.arange(sample.shape[0])
+
+    channel_names = [
+        "Accelerometer x",
+        "Accelerometer y",
+        "Accelerometer z",
+        "Gyroscope x",
+        "Gyroscope y",
+        "Gyroscope z",
+    ]
+
+    fig, axes = plt.subplots(2, 3, figsize=(11, 6))
+    axes = axes.ravel()
+
+    for i in range(6):
+        axes[i].plot(time, sample[:, i], linewidth=1.8)
+        axes[i].set_title(channel_names[i], fontsize=11)
+        axes[i].set_xlabel("Time step")
+        axes[i].set_ylabel("Amplitude")
+        axes[i].grid(True, alpha=0.3)
+
+    fig.suptitle(f"Class: {label}", fontsize=14)
+    plt.tight_layout()
+    plt.show()
+
+
 class BaseTransformerClassifier(nn.Module):
     def __init__(
         self,
@@ -224,6 +260,7 @@ def main():
 
     ### Load the data
     train_data, train_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TRAIN.arff")
+    plot_sample(train_data, train_labels, sample_idx=0)
 
     unique_labels = np.unique(train_labels)
     print(train_data.shape)
