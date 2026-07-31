@@ -28,17 +28,7 @@ The dataset can therefore be used to investigate whether a machine-learning mode
 
 The forced Duffing oscillator is described by:
 
-$$
-\frac{\mathrm{d}^2 q_1}{\mathrm{d}t^2}
-+
-c\frac{\mathrm{d}q_1}{\mathrm{d}t}
-+
-kq_1
-+
-\beta q_1^3
-=
-f\cos(\omega t+\phi)
-$$
+$$ \frac{\mathrm{d}^2 q_1}{\mathrm{d}t^2} + c\frac{\mathrm{d}q_1}{\mathrm{d}t} + kq_1 + \beta q_1^3 = f\cos(\omega t+\phi) $$
 
 where:
 
@@ -58,19 +48,9 @@ $$
 
 gives the first-order state-space representation:
 
-$$
-\frac{\mathrm{d}q_1}{\mathrm{d}t}
-=
-q_2
-$$
+$$ \frac{\mathrm{d}q_1}{\mathrm{d}t} = q_2 $$
 
-$$
-\frac{\mathrm{d}q_2}{\mathrm{d}t}
-=
--cq_2-kq_1-\beta q_1^3
-+
-f\cos(\omega t+\phi)
-$$
+$$ \frac{\mathrm{d}q_2}{\mathrm{d}t} = -cq_2-kq_1-\beta q_1^3 + f\cos(\omega t+\phi) $$
 
 ## Data Description
 
