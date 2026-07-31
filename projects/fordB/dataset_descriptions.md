@@ -35,9 +35,9 @@ FordB can therefore be used to investigate model robustness under distribution s
 
 Typical data shapes are:
 
-- Training input: \(X_{\mathrm{train}} \in \mathbb{R}^{3636 \times 500 \times 1}\)
-- Test input: \(X_{\mathrm{test}} \in \mathbb{R}^{810 \times 500 \times 1}\)
-- Labels: \(y \in \{0,1\}^{N}\)
+- Training input: $$\(X_{\mathrm{train}} \in \mathbb{R}^{3636 \times 500 \times 1}\)$$
+- Test input: $$\(X_{\mathrm{test}} \in \mathbb{R}^{810 \times 500 \times 1}\)$$
+- Labels: $$\(y \in \{0,1\}^{N}\)$$
 
 Depending on the downloaded format, the original labels may be encoded as \(-1\) and \(1\).
 
