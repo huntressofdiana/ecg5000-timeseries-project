@@ -215,18 +215,6 @@ where:
 - $\mathcal{L}_{\mathrm{physics}}$ penalizes violations of the Duffing oscillator equations.
 - $\lambda_{\mathrm{physics}}$ controls the contribution of the physical constraint.
 
-For example, the physics residuals can be defined as:
-
-$$ r_1(t) = \frac{\mathrm{d}\hat{q}_1}{\mathrm{d}t} - \hat{q}_2 $$
-
-and
-
-$$ r_2(t) = \frac{\mathrm{d}\hat{q}_2}{\mathrm{d}t} + c\hat{q}_2 + k\hat{q}_1 + \beta\hat{q}_1^3 - f\cos(\omega t+\phi) $$
-
-The physics loss can then be calculated as:
-
-$$ \mathcal{L}_{\mathrm{physics}} = \frac{1}{N} \sum_{i=1}^{N} \left(r_1(t_i)^2+r_2(t_i)^2 \right) $$
-
 The project can investigate whether the physical constraint improves generalization to unseen forcing amplitudes and unseen dynamical regimes.
 
 ## Evaluation Metrics
@@ -238,33 +226,3 @@ Standard pointwise trajectory metrics include:
 - Root Mean Squared Error (RMSE)
 - Relative error
 
-However, a low pointwise error does not necessarily mean that the predicted system exhibits the correct long-term dynamics.
-
-Additional dynamical evaluation measures can include:
-
-- Maximum steady-state vibration amplitude
-- Mean steady-state vibration amplitude
-- Oscillation periodicity
-- Phase-space trajectory
-- Frequency spectrum
-- Entropy
-- Location of bifurcation points
-- Qualitative identification of periodic and chaotic regimes
-
-The benchmark characterizes the system response using the maximum and mean squared displacement after an initial transient period.
-
-The maximum squared displacement is:
-
-$$ A_{\max} = \max_{t>t^*} q_1^2(t) $$
-
-The mean squared displacement is:
-
-$$ A_{\mathrm{mean}} = \operatorname{mean}_{t>t^*} q_1^2(t) $$
-
-where the transient boundary is set to:
-
-$$
-t^*=20
-$$
-
-These quantities can be compared between the predicted and reference trajectories to determine whether the model reproduces the correct long-term response.
