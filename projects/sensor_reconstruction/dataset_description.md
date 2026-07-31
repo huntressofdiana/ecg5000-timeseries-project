@@ -32,8 +32,8 @@ The dataset supports the development of data-driven **soft-sensing** methods tha
 - **Target:** three systematically biased thermocouple signals.
 - Typical sample shapes are:
 
-  - Input: \(X \in \mathbb{R}^{T \times 9}\)
-  - Target: \(Y \in \mathbb{R}^{T \times 3}\)
+  - Input: $$\(X \in \mathbb{R}^{T \times 9}\)$$
+  - Target: $$\(Y \in \mathbb{R}^{T \times 3}\)$$
 
 ## Typical Modeling Tasks
 
