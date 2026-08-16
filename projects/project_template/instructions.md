@@ -30,20 +30,5 @@
 
 - [ ] Trained model (saved checkpoint or exported weights)
 - [ ] Jupyter notebook with exploratory data analysis, training loop, and evaluation
-- [ ] Short written report (≤ 2 pages) summarising your approach and results
+- [ ] Presentation summarising your approach and results
 
-## Evaluation Criteria
-
-| Criterion | Weight |
-|-----------|--------|
-| Model performance (quantitative metrics) | 40 % |
-| Code quality and documentation | 30 % |
-| Written report clarity | 30 % |
-
-## Deadline
-
-*To be announced.*
-
-## Contact
-
-Raise questions in the course channel or during office hours.
