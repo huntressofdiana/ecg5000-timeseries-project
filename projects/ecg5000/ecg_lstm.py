@@ -7,6 +7,8 @@ from torch import nn
 import matplotlib.pyplot as plt
 
 from torch.utils.data import Dataset, DataLoader
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import train_test_split
 
 train = pd.read_csv(
     "data/ECG5000_TRAIN.txt",
@@ -81,6 +83,42 @@ class LSTMClassifier(nn.Module):
 
         return prediction
 
+def plot_confusion_matrix(
+    true_indices: np.ndarray, predicted_indices: np.ndarray
+) -> None:
+    class_names = [
+        "I",
+        "II",
+        "III",
+        "IV",
+        "V",
+    ]
+
+    cm = confusion_matrix(
+        true_indices,
+        predicted_indices,
+    )
+
+    display = ConfusionMatrixDisplay(
+        confusion_matrix=cm,
+        display_labels=class_names,
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    display.plot(
+        ax=ax,
+        cmap="Blues",
+        values_format="d",
+    )
+
+    plt.xticks(rotation=30, ha="right")
+    plt.xlabel("Predicted class")
+    plt.ylabel("True class")
+    plt.title("Confusion Matrix – ECG5000")
+    plt.tight_layout()
+    plt.show()
+
 def main():
 
     ### Load training data
@@ -89,9 +127,20 @@ def main():
         sep=r"\s+",
         header=None,
     )
+    X = train.iloc[:, 1:].values
+    y = train.iloc[:, 0].values
 
-    y_train = train.iloc[:, 0].values
-    X_train = train.iloc[:, 1:].values
+    ### Split into training and validation sets
+    X_train, X_val, y_train, y_val = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y,
+    )
+
+    print("Training:", X_train.shape)
+    print("Validation:", X_val.shape)
 
     print("X train shape:", X_train.shape) # tells us that there are 500 ecgs, but 140 time steps per ecg
     print("y train shape:", y_train.shape) # just 1 class per ecg
@@ -101,6 +150,25 @@ def main():
         signals=X_train,
         labels=y_train,
     )
+
+    val_dataset = ECGDataset(
+    signals=X_val,
+    labels=y_val,
+)
+
+    ### Calculate class weights
+    class_counts = np.bincount(y_train.astype(int))[1:]
+
+    class_weights = np.sqrt(len(y_train) / (len(class_counts) * class_counts))
+    class_weights = np.clip(class_weights, a_min=None, a_max=10.0)
+
+    class_weights = torch.tensor(
+        class_weights,
+        dtype=torch.float32
+    )
+
+    print("Class counts:", class_counts)
+    print("Class weights:", class_weights)
 
     ### Load test data
     test = pd.read_csv(
@@ -142,6 +210,12 @@ def main():
         shuffle=True,
     )
 
+    val_loader = DataLoader(
+    val_dataset,
+    batch_size=32,
+    shuffle=False,
+)   
+
     x_batch, y_batch = next(iter(train_loader))
     print("Batch input shape:", x_batch.shape)
     print("Batch label shape:", y_batch.shape)
@@ -149,8 +223,8 @@ def main():
     ### Initialize model
 
     input_size = 1
-    hidden_size = 64
-    num_layers = 1
+    hidden_size = 128 
+    num_layers = 2
     num_classes = 5
 
     model = LSTMClassifier(
@@ -166,7 +240,9 @@ def main():
     print("Model output shape:", outputs.shape)
 
     ### LOSS FUNCTION --> CROSS ENTROPY LOSS 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(
+    weight=class_weights
+    )
     loss = criterion(
     outputs,
     y_batch,    
@@ -175,16 +251,17 @@ def main():
     print("Loss:", loss.item())
 
     ### Optimizer
-    learning_rate = 0.001
+    learning_rate = 0.0005
 
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=learning_rate,
+        lr=learning_rate
     )
 
     ### Training loop
-    epochs = 200
+    epochs = 100
     train_losses = []
+    val_losses = []
 
     for epoch in range(epochs):
 
@@ -203,6 +280,7 @@ def main():
             )
 
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
             optimizer.step()
 
@@ -211,45 +289,72 @@ def main():
         train_loss /= len(train_loader)
         train_losses.append(train_loss)
 
+        ### Validation
+        model.eval()
+
+        val_loss = 0.0
+
+        with torch.no_grad():
+
+            for x_batch, y_batch in val_loader:
+
+                outputs = model(x_batch)
+
+                loss = criterion(
+                    outputs,
+                    y_batch,
+                )
+
+                val_loss += loss.item()
+
+        val_loss /= len(val_loader)
+        val_losses.append(val_loss)
+
         print(
             f"Epoch {epoch + 1} | "
-            f"Train Loss: {train_loss:.6f}"
-        )
+            f"Train Loss: {train_loss:.6f} | "
+            f"Val Loss: {val_loss:.6f}"
+    )
 
         ### Evaluate on test set
     model.eval()
 
-    correct = 0
-    total = 0
+    all_true = []
+    all_preds = []
 
     with torch.no_grad():
         for x_batch, y_batch in test_loader:
 
             outputs = model(x_batch)
 
-            predicted_classes = torch.argmax(
-                outputs,
-                dim=1,
-            )
+            predicted_classes = torch.argmax(outputs, dim=1)
 
-            correct += (
-                predicted_classes == y_batch
-            ).sum().item()
+            all_true.extend(y_batch.numpy())
+            all_preds.extend(predicted_classes.numpy())
 
-            total += y_batch.size(0)
-        test_accuracy = correct / total
+    all_true = np.array(all_true)
+    all_preds = np.array(all_preds)
 
-    print(
-        f"Test Accuracy: {test_accuracy:.4f}"
+    test_accuracy = (all_true == all_preds).mean()
+    print(f"Test Accuracy: {test_accuracy:.4f}")
+
+    plt.plot(
+        train_losses,
+        label="Training Loss"
     )
 
-    ### Plot training loss
-    plt.plot(train_losses)
+    plt.plot(
+        val_losses,
+        label="Validation Loss"
+    )
 
     plt.xlabel("Epoch")
-    plt.ylabel("Training Loss")
-    plt.title("LSTM Training Loss")
+    plt.ylabel("Loss")
+    plt.title("LSTM Training and Validation Loss")
+    plt.legend()
     plt.show()
+
+    plot_confusion_matrix(all_true, all_preds)
 
 if __name__ == "__main__":
     main()
