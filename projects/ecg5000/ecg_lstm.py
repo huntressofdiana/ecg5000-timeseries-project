@@ -7,8 +7,14 @@ from torch import nn
 import matplotlib.pyplot as plt
 
 from torch.utils.data import Dataset, DataLoader
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import train_test_split
+
+from sklearn.metrics import (
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    balanced_accuracy_score,
+    f1_score,
+)
 
 train = pd.read_csv(
     "data/ECG5000_TRAIN.txt",
@@ -227,13 +233,17 @@ def main():
     num_layers = 2
     num_classes = 5
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Device:", device)
+    
+
     model = LSTMClassifier(
         input_size=input_size,
         hidden_size=hidden_size,
         num_layers=num_layers,
         num_classes=num_classes,
         dropout=0.0,
-    )
+    ).to(device)
 
     outputs = model(x_batch)
 
@@ -335,8 +345,42 @@ def main():
     all_true = np.array(all_true)
     all_preds = np.array(all_preds)
 
+   # --------------------------------------------------------
+    # Test metrics
+    # --------------------------------------------------------
+
     test_accuracy = (all_true == all_preds).mean()
-    print(f"Test Accuracy: {test_accuracy:.4f}")
+
+    balanced_acc = balanced_accuracy_score(
+        all_true,
+        all_preds,
+    )
+
+    macro_f1 = f1_score(
+        all_true,
+        all_preds,
+        average="macro",
+        zero_division=0,
+    )
+
+    print("\n============================")
+    print("TEST RESULTS")
+    print("============================")
+
+    print(
+        f"Accuracy:          "
+        f"{test_accuracy * 100:.2f}%"
+    )
+
+    print(
+        f"Balanced Accuracy: "
+        f"{balanced_acc * 100:.2f}%"
+    )
+
+    print(
+        f"Macro F1 Score:    "
+        f"{macro_f1:.4f}"
+    )
 
     plt.plot(
         train_losses,
