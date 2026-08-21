@@ -16,6 +16,10 @@ from sklearn.metrics import (
 )
 
 
+
+
+PATH_TO_DATA = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\teaching_material\datasets\RacketSports'
+
 def plot_confusion_matrix(
     true_indices: np.ndarray, predicted_indices: np.ndarray
 ) -> None:
@@ -143,7 +147,7 @@ class BaseTransformerClassifier(nn.Module):
 
         self.positional_encoding = PositionalEncoding(d_model=d_model, max_len=n_tokens)
 
-        encoder_layer = nn.TransformerEncoderLayer(
+        encoder_layer = nn.TransformerEncoderLayer(  #intialise the encoder
             d_model=d_model,
             nhead=n_heads,
             dim_feedforward=dim_ff,
@@ -160,7 +164,7 @@ class BaseTransformerClassifier(nn.Module):
         x_embed = self.input_projection(x)
         x_embed_pe = self.positional_encoding(x_embed)
 
-        z = self.encoder(x_embed_pe)
+        z = self.encoder(x_embed_pe) #contextualised representation (bs, n_tokens, d_model)
 
         # Flatten the output of the encoder before passing it to the output projection layer
         z_flat = z.flatten(start_dim=1)
@@ -214,8 +218,7 @@ class CLSTransformerClassifier(nn.Module):
         x = self.positional_encoding(x)
 
         x = self.encoder(x)
-        summary = x[:, 0, :]
-
+        summary = x[:, 0, :] #(bs: batch size) d_model)
         logits = self.output_projection(summary)
 
         return logits
@@ -232,7 +235,7 @@ class PositionalEncoding(nn.Module):
         )
 
         pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term) #Specifies what the different features will look like 
 
         pe = pe.unsqueeze(0)
         self.register_buffer("pe", pe)
@@ -259,14 +262,19 @@ def main():
     torch.manual_seed(42)
 
     ### Load the data
-    train_data, train_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TRAIN.arff")
+    train_data, train_labels = load_racket_sports_arff(
+        f"{PATH_TO_DATA}\\RacketSports_TRAIN.arff"
+    )
+
     plot_sample(train_data, train_labels, sample_idx=0)
 
     unique_labels = np.unique(train_labels)
     print(train_data.shape)
     print(unique_labels.shape)
 
-    test_data, test_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TEST.arff")
+    test_data, test_labels = load_racket_sports_arff(
+        f"{PATH_TO_DATA}\\RacketSports_TEST.arff"
+    )
 
     #### One Hot Encoding of the labels
     ohe = OneHotEncoder()
@@ -313,7 +321,11 @@ def main():
     n_layers = 1
     n_tokens = train_data.shape[1]
 
+
+    # CUDA: Nvidia GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 
     model = BaseTransformerClassifier(
         input_size=input_size,
