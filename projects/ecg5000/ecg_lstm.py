@@ -54,8 +54,6 @@ class ECGDataset(Dataset):
         return x, y
 
 ### LSTM Model
-
-
 class LSTMClassifier(nn.Module):
     def __init__(
         self,
