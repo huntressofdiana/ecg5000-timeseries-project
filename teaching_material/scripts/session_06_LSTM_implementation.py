@@ -5,6 +5,7 @@ from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+from pathlib import Path
 
 
 ### Dataset
@@ -79,9 +80,13 @@ def main():
     train_fraction = 0.80
 
     ### Load the data
-    data = np.load(
-        "teaching_material/datasets/DampedSineSignal/damped_sine_signal.npy"
-    )
+
+    base_dir = Path(__file__).resolve().parents[2]
+
+    dataset_path = base_dir / "teaching_material" / "datasets" / "DampedSineSignal" / "damped_sine_signal.npy"
+
+    data = np.load(dataset_path)
+
     print("Signal shape:", data.shape)
     time = data[:, 0]
     signal = data[:, 1:2]
@@ -153,7 +158,7 @@ def main():
     )
 
     ### Training loop
-    epochs = 500
+    epochs = 100
     train_losses = []
 
     for epoch in range(epochs):
@@ -192,7 +197,7 @@ def main():
     plt.grid(True)
     plt.show()
 
-    model.eval()
+    model.eval() #enbles the model evaluation 
 
     # The initial context contains only training values
     window = torch.tensor(
@@ -205,12 +210,14 @@ def main():
     # (1, context_length, 1)
     print("Initial test context:", window.shape)
 
-    test_predictions_scaled = []
+    test_predictions_scaled = [] #scaled data
 
-    with torch.no_grad():
+
+    # Evaluation Loop 
+    with torch.no_grad(): #dont care about backward pass as we are evaluating, only care about forward pass
         for _ in range(len(test_signal)):
             # Predict the next value
-            next_value = model(window)
+            next_value = model(window)  #this does the prediction
 
             test_predictions_scaled.append(next_value.cpu().numpy())
 
@@ -232,12 +239,12 @@ def main():
         axis=0,
     )
 
-    # Convert prediction back to original scale
+    # Convert prediction back to original scale (Inverse the scaling)
     test_predictions = scaler.inverse_transform(test_predictions_scaled)
 
     test_target = test_signal
 
-    ### Metrics
+    ### Metrics (We are now evaluating model based on some metrics)
     test_mse = np.mean((test_predictions - test_target) ** 2)
     r2 = r2_score(test_target, test_predictions)
 
