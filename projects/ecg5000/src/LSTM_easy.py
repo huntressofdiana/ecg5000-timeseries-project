@@ -3,6 +3,13 @@ import torch
 
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
+from sklearn.metrics import (
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    balanced_accuracy_score,
+    f1_score,
+)
+import matplotlib.pyplot as plt
 
 
 # ============================================================
@@ -59,9 +66,9 @@ def main():
     HIDDEN_SIZE = 128
 
     # These go inside the training loop and optimizer directly because it changes how the model learns not its structure. 
-    BATCH_SIZE = 128
+    BATCH_SIZE = 32
     LEARNING_RATE = 0.001
-    EPOCHS = 100
+    EPOCHS = 30
 
     # --------------------------------------------------------
     # 1. Load data
@@ -190,7 +197,13 @@ def main():
     # --------------------------------------------------------
     # 10. Train
     # --------------------------------------------------------
+    X_test_device = X_test.to(device)
+    y_test_device = y_test.to(device)
 
+
+    train_losses = []
+    test_losses = []
+    
     for epoch in range(EPOCHS):
 
         model.train() #set mode to trainning mode
@@ -222,12 +235,43 @@ def main():
 
             total_loss += loss.item()
 
+        avg_train_loss = total_loss / len(train_loader)
+
+        model.eval()
+ 
+        with torch.no_grad():
+            test_outputs = model(X_test_device)
+            test_loss = criterion(test_outputs, y_test_device).item()
+ 
+        train_losses.append(avg_train_loss)
+        test_losses.append(test_loss)
+ 
         print(
             f"Epoch {epoch + 1} | "
-            f"Loss: {total_loss / len(train_loader):.4f}"
+            f"Train Loss: {avg_train_loss:.4f} | "
+            f"Test Loss: {test_loss:.4f}"
         )
 
-
+    best_epoch_index = test_losses.index(min(test_losses))  # 0-based
+    best_epoch_number = best_epoch_index + 1                # human-readable
+ 
+    plt.figure()
+    plt.plot(range(1, EPOCHS + 1), train_losses, label="Train Loss")
+    plt.plot(range(1, EPOCHS + 1), test_losses, label="Test Loss")
+    plt.axvline(
+        best_epoch_number,
+        color="gray",
+        linestyle="--",
+        label=f"Best epoch ({best_epoch_number})",
+    )
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Train vs. Test Loss by Epoch")
+    plt.legend()
+    plt.show()
+ 
+    print(f"Lowest test loss was at epoch {best_epoch_number} "
+            f"(test loss = {test_losses[best_epoch_index]:.4f})")
     # --------------------------------------------------------
     # 11. Test
     # --------------------------------------------------------
@@ -259,16 +303,38 @@ def main():
     )
 
 
+    y_test_np = y_test.cpu().numpy()
+    predictions_np = predictions.cpu().numpy()
+
+    cm = confusion_matrix(y_test_np, predictions_np)
+ 
+    balanced_acc = balanced_accuracy_score(y_test_np, predictions_np)
+ 
+    macro_f1 = f1_score(y_test_np, predictions_np, average="macro")
+ 
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot(cmap="Blues")
+    plt.title("Confusion Matrix — ECG5000 Test Set")
+    plt.show()
+ 
+    print()
+    print(f"Balanced Accuracy: {balanced_acc * 100:.2f}%")
+    print(f"Macro F1 Score:    {macro_f1:.4f}")
+
+
 if __name__ == "__main__":
     main()
 
 
 
-    #initlaise the model with the hyperparameters
-    #construct a data loader to load in the values and convert to pytorch tensors
-    # loops through the epoches to optimise
-        # forward run
-        # calculate gradients (backwards)
-        # run optimiser to update the wieghts
+    # model
+    #   initlaise the model with the hyperparameters
+    # data prep: 
+    #   construct a data loader to load in the values and convert to pytorch tensors
+    # training 
+    #   loops through the epoches to optimise
+        #   forward run
+        #   Wcalculate gradients (backwards)
+        #    run optimiser to update the wieghts
     # output is linear (hidden layer) to 5 ouputs
-    # and then compare to the actual solution
+    # and then compare to the actual solution and print out all the sucess metrics import from skibidi library
