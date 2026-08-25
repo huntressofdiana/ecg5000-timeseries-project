@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.metrics import (
     confusion_matrix,
     ConfusionMatrixDisplay,
@@ -145,6 +147,22 @@ def main():
         stratify=y,
     )
 
+    # --------------------------------------------------------
+    # Standard scaling
+    # --------------------------------------------------------
+
+    scaler = StandardScaler()
+
+    # Learn mean and standard deviation from TRAINING data only
+    X_train = scaler.fit_transform(X_train)
+
+    # Apply the same scaling to validation data
+    X_val = scaler.transform(X_val)
+
+    # Keep everything as float32 for PyTorch
+    X_train = X_train.astype(np.float32)
+    X_val = X_val.astype(np.float32)
+
     print("Training:", X_train.shape)
     print("Validation:", X_val.shape)
 
@@ -188,6 +206,9 @@ def main():
 
     print("X test shape:", X_test.shape)
     print("y test shape:", y_test.shape)
+
+    # Use SAME scaler learned from training data
+    X_test = scaler.transform(X_test).astype(np.float32)
 
     ### Create test dataset
     test_dataset = ECGDataset(
@@ -249,6 +270,8 @@ def main():
 
     print("Model output shape:", outputs.shape)
 
+    class_weights = class_weights.to(device)
+
     ### LOSS FUNCTION --> CROSS ENTROPY LOSS 
     criterion = nn.CrossEntropyLoss(
     weight=class_weights
@@ -279,6 +302,9 @@ def main():
         train_loss = 0.0
 
         for x_batch, y_batch in train_loader:
+
+            x_batch = x_batch.to(device)
+            y_batch = y_batch.to(device)
 
             optimizer.zero_grad()
 
