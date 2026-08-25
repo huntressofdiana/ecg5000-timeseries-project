@@ -9,36 +9,41 @@ from torch.utils.data import DataLoader, TensorDataset
 # LSTM MODEL
 # ============================================================
 
-class LSTMClassifier(nn.Module):
+class LSTMClassifier(nn.Module): # Class: basically a blueprint, so this is defining my own type of NN
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, hidden_size=32): # def: definition of a special
+        super().__init__() # Special function that runs when the model is first created
+        #ie. construct model --> init --> create the layers
 
+
+        self.hidden_size = hidden_size
+
+        # Hyperparameters THAT WE CHOOSE
         # Each time step has 1 value: ECG amplitude
         # Hidden state has 32 values
         self.lstm = nn.LSTM(
             input_size=1,
-            hidden_size=32,
-            batch_first=True,
+            hidden_size=self.hidden_size, # internal representation contains 32 numbers (internal values/learnt features)
+            batch_first=True, 
         ) 
 
         # Convert final LSTM output into 5 class scores
         self.fc = nn.Linear(
-            32,
+            self.hidden_size, # 32 hidden layers but need to convert into 5 layers
             5,
-        )
+        )  # so it is ECG (140 X 1) --> LSTM --> 32 learned features --> linear layer --> 5 class scores
 
-    def forward(self, x):
+    def forward(self, x): #what happens when data goes through the network?
 
         # x shape:
-        # (batch_size, 140, 1)
+        # (batch_size, 140, 1) (32 ecgs, 140 time steps each, each timestep 1 number)
 
-        lstm_output, _ = self.lstm(x)
+        lstm_output, _ = self.lstm(x) #sends all ECGs through LSTM signal 
 
-        # Take the output at the LAST time step
-        last_output = lstm_output[:, -1, :]
+        # Take the output at the LAST time step (for each ecg in the batch)
+        last_output = lstm_output[:, -1, :] #-1 because it can count backwards ie. -5, -4, -3, -2, -1
 
-        # Convert it into 5 class scores
+        # Convert it into 5 class scores (from 32 features --> 5 class scores)
         output = self.fc(last_output)
 
         return output
@@ -49,6 +54,14 @@ class LSTMClassifier(nn.Module):
 # ============================================================
 
 def main():
+
+    # Hyperparameters that we can change
+    HIDDEN_SIZE = 128
+
+    # These go inside the training loop and optimizer directly because it changes how the model learns not its structure. 
+    BATCH_SIZE = 128
+    LEARNING_RATE = 0.001
+    EPOCHS = 100
 
     # --------------------------------------------------------
     # 1. Load data
@@ -112,7 +125,7 @@ def main():
     print("Training labels:", y_train.shape)
 
     # X_train should be:
-    # (500, 140, 1)
+    # (500, 140, 1) #entire training set has 500 ECG heartbeats
 
 
     # --------------------------------------------------------
@@ -129,7 +142,7 @@ def main():
     # Group data into mini batches of 32 samples 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=32,
+        batch_size=BATCH_SIZE,
         shuffle=True, #randomises the order of the samples
     )
 
@@ -151,7 +164,7 @@ def main():
     # 7. Create model
     # --------------------------------------------------------
 
-    model = LSTMClassifier().to(device)
+    model = LSTMClassifier(hidden_size=HIDDEN_SIZE).to(device)
     # Creates an instance of your defined neural network model
 
 
@@ -167,9 +180,10 @@ def main():
     # 9. Optimizer
     # --------------------------------------------------------
 
+    # Optimiser is responsible for changing the NN weights 
     optimizer = torch.optim.Adam(
-        model.parameters(),
-        lr=0.001,
+        model.parameters(), #gives Adam all the learnable numbers (ie. weights in the network)
+        lr=LEARNING_RATE, #changes how aggressively optimiser changes the model
     )
 
 
@@ -177,15 +191,13 @@ def main():
     # 10. Train
     # --------------------------------------------------------
 
-    epochs = 100
+    for epoch in range(EPOCHS):
 
-    for epoch in range(epochs):
-
-        model.train() #set mode
+        model.train() #set mode to trainning mode
 
         total_loss = 0
 
-        for X_batch, y_batch in train_loader:
+        for X_batch, y_batch in train_loader: # loops through all the batches
 
             X_batch = X_batch.to(device)
             y_batch = y_batch.to(device)
@@ -196,14 +208,14 @@ def main():
             # Run ECGs through LSTM (forward pass)
             outputs = model(X_batch)
 
-            # Compare predictions with correct labels
+            # Compare predictions with correct labels// calculate the loss
             loss = criterion(
                 outputs,
                 y_batch,
             )
 
-            # Calculate gradients
-            loss.backward()
+            # Calculate gradients so we can see how the loss will change
+            loss.backward() 
 
             # Update model weights
             optimizer.step()
@@ -249,3 +261,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+    #initlaise the model with the hyperparameters
+    #construct a data loader to load in the values and convert to pytorch tensors
+    # loops through the epoches to optimise
+        # forward run
+        # calculate gradients (backwards)
+        # run optimiser to update the wieghts
+    # output is linear (hidden layer) to 5 ouputs
+    # and then compare to the actual solution
