@@ -1,131 +1,157 @@
-"""
-Re-split the ECG5000 dataset.
- 
-The official ECG5000_TRAIN.txt / ECG5000_TEST.txt split gives only 500
-training examples, which barely contains any of the rare classes
-(class 5 especially). This script pools ALL 5000 examples together
-and re-splits them into:
- 
-    1000 train
-    1000 validation
-    3000 test
- 
-using STRATIFIED splitting — meaning each split preserves the same
-per-class proportions as the full 5000-example dataset. This gives
-the new training set roughly double the rare-class examples of the
-original 500-example split, without artificially inventing extra
-data (that would be oversampling, a different technique).
- 
-Run this ONCE to produce three new .txt files. Your main training
-script can then point at the new train/val files instead of the
-originals.
-"""
- 
+from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split
- 
- 
-# --------------------------------------------------------
-# 0. Config — adjust paths if needed
-# --------------------------------------------------------
- 
-TRAIN_PATH = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\projects\ecg5000\data\ECG5000_TRAIN.txt'
-TEST_PATH = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\projects\ecg5000\data\ECG5000_TEST.txt'
- 
-OUT_TRAIN_PATH = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\projects\ecg5000\dataProcessed\ECG5000_TRAIN_1000.txt'
-OUT_VAL_PATH = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\projects\ecg5000\dataProcessed\ECG5000_VAL_1000.txt'
-OUT_TEST_PATH = r'C:\Users\Yovel\Documents\pytorch_project\DL_TimeSeries_SummerSchool\projects\ecg5000\dataProcessed\ECG5000_TEST_3000.txt'
- 
-N_TRAIN = 1000
-N_VAL = 1000
-N_TEST = 3000  # should add up to the total example count (5000)
- 
-RANDOM_SEED = 42  # fixed seed = reproducible split every time you run this
- 
- 
-def main():
- 
-    # --------------------------------------------------------
-    # 1. Load and combine both original files
-    # --------------------------------------------------------
-    # We're discarding the original train/test boundary entirely and
-    # re-partitioning from the full pool of 5000 examples.
- 
-    train_data = np.loadtxt(TRAIN_PATH)
-    test_data = np.loadtxt(TEST_PATH)
- 
-    all_data = np.concatenate([train_data, test_data], axis=0)
- 
-    print(f"Total combined examples: {all_data.shape[0]}")
-    assert all_data.shape[0] == N_TRAIN + N_VAL + N_TEST, (
-        "N_TRAIN + N_VAL + N_TEST must equal the total number of examples"
+
+from sklearn.model_selection import (
+    train_test_split,
+    StratifiedKFold,
+)
+
+
+# ============================================================
+# PATHS
+# ============================================================
+
+# data_split.py is inside:
+# ecg5000/src/data_split.py
+
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+
+DATA_DIR = PROJECT_DIR / "data"
+
+OUTPUT_DIR = PROJECT_DIR / "dataProcessed"
+
+OUTPUT_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
+
+
+train_path = DATA_DIR / "ECG5000_TRAIN.txt"
+test_path = DATA_DIR / "ECG5000_TEST.txt"
+
+
+# ============================================================
+# LOAD ORIGINAL DATA
+# ============================================================
+
+print("Loading data from:")
+print(train_path)
+print(test_path)
+
+
+train_data = np.loadtxt(train_path)
+test_data = np.loadtxt(test_path)
+
+
+print("\nOriginal shapes:")
+print("Train:", train_data.shape)
+print("Test:", test_data.shape)
+
+
+# ============================================================
+# COMBINE ALL 5000 SAMPLES
+# ============================================================
+
+all_data = np.vstack([
+    train_data,
+    test_data
+])
+
+
+print("\nCombined shape:")
+print(all_data.shape)
+
+
+# First column = class label
+labels = all_data[:, 0]
+
+
+# ============================================================
+# 4000 CROSS-VALIDATION / 1000 FINAL TEST
+# ============================================================
+
+cv_data, final_test = train_test_split(
+    all_data,
+    test_size=1000,
+    random_state=42,
+    shuffle=True,
+    stratify=labels,
+)
+
+
+print("\nNew split:")
+print("Cross-validation:", cv_data.shape)
+print("Final test:", final_test.shape)
+
+
+# Save complete CV dataset
+np.savetxt(
+    OUTPUT_DIR / "ECG5000_CV_4000.txt",
+    cv_data
+)
+
+# Save untouched final test set
+np.savetxt(
+    OUTPUT_DIR / "ECG5000_FINAL_TEST_1000.txt",
+    final_test
+)
+
+
+# ============================================================
+# CREATE 5 STRATIFIED FOLDS
+# ============================================================
+
+cv_labels = cv_data[:, 0]
+
+skf = StratifiedKFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42,
+)
+
+
+for fold_number, (train_idx, val_idx) in enumerate(
+    skf.split(cv_data, cv_labels),
+    start=1,
+):
+
+    fold_train = cv_data[train_idx]
+    fold_val = cv_data[val_idx]
+
+    print(
+        f"\nFold {fold_number}: "
+        f"train={len(fold_train)}, "
+        f"validation={len(fold_val)}"
     )
- 
-    # Column 0 = label, columns 1: = the 140 signal values
-    labels = all_data[:, 0]
- 
-    # --------------------------------------------------------
-    # 2. Show original class distribution (before splitting)
-    # --------------------------------------------------------
-    # This tells us just how rare class 5 (and others) really are.
- 
-    unique_labels, counts = np.unique(labels, return_counts=True)
-    print("\nClass distribution across all 5000 examples:")
-    for label, count in zip(unique_labels, counts):
-        print(f"  Class {int(label)}: {count} examples ({count / len(labels) * 100:.1f}%)")
- 
-    # --------------------------------------------------------
-    # 3. Stratified split: pool -> (train) + (val + test)
-    # --------------------------------------------------------
-    # train_test_split's `stratify` argument ensures each resulting
-    # split has roughly the same per-class proportions as the input.
-    # We do this in two steps because train_test_split only splits
-    # into two pieces at a time.
- 
-    train_data_new, remaining_data = train_test_split(
-        all_data,
-        train_size=N_TRAIN,
-        stratify=labels,          # preserve class proportions
-        random_state=RANDOM_SEED, # reproducibility
+
+    # Save validation fold by itself
+    np.savetxt(
+        OUTPUT_DIR
+        / f"ECG5000_FOLD_{fold_number}_800.txt",
+        fold_val
     )
- 
-    # Re-extract labels for the remaining pool, to stratify the next split
-    remaining_labels = remaining_data[:, 0]
- 
-    val_data_new, test_data_new = train_test_split(
-        remaining_data,
-        train_size=N_VAL,
-        stratify=remaining_labels,
-        random_state=RANDOM_SEED,
+
+    # Save training portion for this fold
+    np.savetxt(
+        OUTPUT_DIR
+        / f"ECG5000_FOLD_{fold_number}_TRAIN_3200.txt",
+        fold_train
     )
- 
-    print(f"\nNew split sizes: train={train_data_new.shape[0]}, "
-          f"val={val_data_new.shape[0]}, test={test_data_new.shape[0]}")
- 
-    # --------------------------------------------------------
-    # 4. Confirm class 5 representation improved in training set
-    # --------------------------------------------------------
- 
-    def class_5_count(data):
-        return int((data[:, 0] == 5).sum())
- 
-    print(f"\nClass 5 count — original 500-example train file: "
-          f"{class_5_count(train_data)}")
-    print(f"Class 5 count — new {N_TRAIN}-example train file: "
-          f"{class_5_count(train_data_new)}")
- 
-    # --------------------------------------------------------
-    # 5. Save the three new files, same format as the originals
-    # --------------------------------------------------------
-    # np.savetxt writes plain space-separated numbers, matching the
-    # format np.loadtxt expects to read back in your main script.
- 
-    np.savetxt(OUT_TRAIN_PATH, train_data_new)
-    np.savetxt(OUT_VAL_PATH, val_data_new)
-    np.savetxt(OUT_TEST_PATH, test_data_new)
- 
-    print(f"\nSaved:\n  {OUT_TRAIN_PATH}\n  {OUT_VAL_PATH}\n  {OUT_TEST_PATH}")
- 
- 
-if __name__ == "__main__":
-    main()
+
+    # Save validation portion for this fold
+    np.savetxt(
+        OUTPUT_DIR
+        / f"ECG5000_FOLD_{fold_number}_VAL_800.txt",
+        fold_val
+    )
+
+
+# ============================================================
+# FINISHED
+# ============================================================
+
+print("\n======================================")
+print("Finished!")
+print("Files saved to:")
+print(OUTPUT_DIR)
+print("======================================")
