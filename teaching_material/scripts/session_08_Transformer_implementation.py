@@ -262,15 +262,13 @@ def main():
     torch.manual_seed(42)
 
     ### Load the data
-    train_data, train_labels = load_racket_sports_arff(
-        f"{PATH_TO_DATA}\\RacketSports_TRAIN.arff"
-    )
-
-    plot_sample(train_data, train_labels, sample_idx=0)
+    train_data, train_labels = load_racket_sports_arff("PATH_TO_DATA\RacketSports_TRAIN.arff")
+    # plot_sample(train_data, train_labels, sample_idx=0)
 
     unique_labels = np.unique(train_labels)
     print(train_data.shape)
     print(unique_labels.shape)
+    return 
 
     test_data, test_labels = load_racket_sports_arff(
         f"{PATH_TO_DATA}\\RacketSports_TEST.arff"
