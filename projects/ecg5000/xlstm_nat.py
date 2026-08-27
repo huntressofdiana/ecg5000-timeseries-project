@@ -243,7 +243,8 @@ def main():
     # --------------------------------------------------
 
     train = pd.read_csv(
-        "data/ECG5000_TRAIN.txt",
+        #"data/ECG5000_TRAIN.txt",
+        "dataProcessed/ECG5000_CV_4000.txt",
         sep=r"\s+",
         header=None,
     )
@@ -340,7 +341,8 @@ def main():
     # --------------------------------------------------
 
     test = pd.read_csv(
-        "data/ECG5000_TEST.txt",
+        #"data/ECG5000_TEST.txt",
+        "dataProcessed/ECG5000_FINAL_TEST_1000.txt"
         sep=r"\s+",
         header=None,
     )
