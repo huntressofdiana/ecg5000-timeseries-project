@@ -3,8 +3,12 @@ import numpy as np
 import torch
 from torch import nn
 import matplotlib.pyplot as plt
+import time 
 
 from torch.utils.data import Dataset, DataLoader
+
+from sklearn.preprocessing import StandardScaler
+
 
 from sklearn.metrics import (
     accuracy_score,
@@ -255,7 +259,6 @@ def main():
     print("Full training data:", X.shape)
     print("Full training labels:", y.shape)
 
-
     # --------------------------------------------------
     # TRAIN / VALIDATION SPLIT
     # --------------------------------------------------
@@ -281,6 +284,46 @@ def main():
         y_train.shape
     )
 
+
+    # # Standard Scaling
+    # scaler = StandardScaler()
+
+    # # Fit scaler only using training data
+    # X_train = scaler.fit_transform(X_train)
+
+    # # Use the same scaler for validation and test data
+    # X_val = scaler.transform(X_val)
+
+    ### Standard Scaling
+
+    scaler = StandardScaler()
+
+    # Fit ONLY using training data
+    train_scaled = scaler.fit_transform(
+        train_signals.reshape(-1, 1)
+    ).reshape(train_signals.shape)
+
+    # Use training scaler on validation and test data
+    val_scaled = scaler.transform(
+        val_signals.reshape(-1, 1)
+    ).reshape(val_signals.shape)
+
+    test_scaled = scaler.transform(
+        test_signals.reshape(-1, 1)
+    ).reshape(test_signals.shape)
+
+
+    ### Add feature dimension for Transformer
+
+    train_scaled = train_scaled[:, :, np.newaxis]
+    val_scaled = val_scaled[:, :, np.newaxis]
+    test_scaled = test_scaled[:, :, np.newaxis]
+
+
+    print("\nTransformer input shapes:")
+    print("Train:", train_scaled.shape)
+    print("Validation:", val_scaled.shape)
+    print("Test:", test_scaled.shape)
 
     # --------------------------------------------------
     # DATASETS
@@ -342,13 +385,16 @@ def main():
 
     test = pd.read_csv(
         #"data/ECG5000_TEST.txt",
-        "dataProcessed/ECG5000_FINAL_TEST_1000.txt"
+        "dataProcessed/ECG5000_FINAL_TEST_1000.txt",
         sep=r"\s+",
         header=None,
     )
 
     y_test = test.iloc[:, 0].values
     X_test = test.iloc[:, 1:].values
+    
+    # Apply the scaler fitted on the training data
+    X_test = scaler.transform(X_test)
 
     print(
         "X test shape:",
@@ -434,7 +480,7 @@ def main():
 
     # Start simple:
     # one mLSTM block
-    num_blocks = 1
+    num_blocks = 2
 
     num_heads = 4
 
@@ -529,16 +575,17 @@ def main():
     # TRAINING LOOP
     # --------------------------------------------------
 
-    epochs = 100
+    epochs = 50
 
     train_losses = []
     val_losses = []
-
+    time_per_epoch = []
     best_val_loss = float("inf")
 
 
     for epoch in range(epochs):
 
+        start_time = time.time()
         ### TRAINING
 
         model.train()
@@ -624,14 +671,25 @@ def main():
                 "best_mlstm_ecg.pth",
             )
 
+        epoch_time = time.time()-start_time
+        time_per_epoch.append(epoch_time)
 
         print(
             f"Epoch {epoch + 1:3d} | "
             f"Train Loss: {train_loss:.6f} | "
             f"Val Loss: {val_loss:.6f} | "
-            f"Best Val Loss: {best_val_loss:.6f}"
+            f"Best Val Loss: {best_val_loss:.6f} | "
+            f"Time: {epoch_time:.2f}s"
         )
 
+
+
+    average_time_per_epoch = sum(time_per_epoch) / len(time_per_epoch)
+
+    print(
+        f"\nAverage time per epoch: "
+        f"{average_time_per_epoch:.2f} seconds"
+    )
 
     # --------------------------------------------------
     # PLOT TRAINING
