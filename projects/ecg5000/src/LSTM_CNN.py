@@ -63,10 +63,10 @@ class LSTMClassifier(nn.Module): # Class: basically a blueprint, so this is defi
 def main():
 
     # Hyperparameters that we can change
-    HIDDEN_SIZE = 64
+    HIDDEN_SIZE = 32
 
     # These go inside the training loop and optimizer directly because it changes how the model learns not its structure. 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     LEARNING_RATE = 0.001
     EPOCHS = 30
 
