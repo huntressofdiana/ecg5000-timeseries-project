@@ -1,14 +1,13 @@
+import time
+
 import pandas as pd
 import numpy as np
 import torch
 from torch import nn
 import matplotlib.pyplot as plt
-import time 
 
 from torch.utils.data import Dataset, DataLoader
-
 from sklearn.preprocessing import StandardScaler
-
 
 from sklearn.metrics import (
     accuracy_score,
@@ -19,8 +18,6 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 
-from sklearn.model_selection import train_test_split
-
 # xLSTM imports
 from xlstm import (
     xLSTMBlockStack,
@@ -30,7 +27,10 @@ from xlstm import (
 )
 
 
-### Dataset
+# ============================================================
+# DATASET
+# ============================================================
+
 class ECGDataset(Dataset):
     def __init__(
         self,
@@ -68,7 +68,10 @@ class ECGDataset(Dataset):
         return x, y
 
 
-### mLSTM Model
+# ============================================================
+# mLSTM MODEL
+# ============================================================
+
 class MLSTMClassifier(nn.Module):
     def __init__(
         self,
@@ -83,67 +86,76 @@ class MLSTMClassifier(nn.Module):
     ):
         super().__init__()
 
-        # ECG input has only one feature at each time step
+        # Project the single ECG feature into d_model dimensions
         #
         # (B, 140, 1)
         #       ↓
         # (B, 140, d_model)
+
         self.input_projection = nn.Linear(
             input_size,
             d_model,
         )
 
-        ### Configure the mLSTM
+
+        # ----------------------------------------------------
+        # Configure mLSTM
+        # ----------------------------------------------------
 
         xlstm_config = xLSTMBlockStackConfig(
 
-            # We are ONLY using mLSTM blocks
+            # Only mLSTM blocks are being used
             mlstm_block=mLSTMBlockConfig(
 
                 mlstm=mLSTMLayerConfig(
 
-                    # Local temporal context before Q/K/V
+                    # Local temporal context
                     conv1d_kernel_size=conv1d_kernel_size,
 
-                    # Groups used for Q/K/V projections
+                    # Feature grouping for Q/K/V projections
                     qkv_proj_blocksize=qkv_proj_blocksize,
 
-                    # Multiple mLSTM heads
+                    # Number of mLSTM heads
                     num_heads=num_heads,
                 )
             ),
 
-            # ECG has 140 time steps
+            # Number of ECG time steps
             context_length=context_length,
 
-            # Number of mLSTM blocks stacked
+            # Number of stacked mLSTM blocks
             num_blocks=num_blocks,
 
-            # Hidden representation size
+            # Internal representation size
             embedding_dim=d_model,
         )
 
-        ### mLSTM encoder
+
+        # mLSTM encoder
         self.encoder = xLSTMBlockStack(
             xlstm_config
         )
 
-        ### Classification layer
 
-        # mLSTM returns:
+        # ----------------------------------------------------
+        # Classification head
+        # ----------------------------------------------------
+
+        # mLSTM output:
         #
         # (B, context_length, d_model)
         #
-        # We flatten:
+        # Flatten:
         #
         # (B, context_length * d_model)
         #
-        # and classify into 5 ECG classes
+        # Then classify into the 5 ECG classes.
 
         self.output_projection = nn.Linear(
             d_model * context_length,
             num_classes,
         )
+
 
     def forward(self, x):
 
@@ -160,16 +172,24 @@ class MLSTMClassifier(nn.Module):
         # mLSTM output:
         # (B, 140, d_model)
 
-        z_flat = z.flatten(start_dim=1)
+        z_flat = z.flatten(
+            start_dim=1
+        )
 
         # (B, 140 * d_model)
 
-        prediction = self.output_projection(z_flat)
+        prediction = self.output_projection(
+            z_flat
+        )
 
         # (B, 5)
 
         return prediction
 
+
+# ============================================================
+# CONFUSION MATRIX
+# ============================================================
 
 def plot_confusion_matrix(
     true_indices: np.ndarray,
@@ -211,15 +231,28 @@ def plot_confusion_matrix(
 
     plt.xlabel("Predicted class")
     plt.ylabel("True class")
-    plt.title("Confusion Matrix – ECG5000 mLSTM")
+
+    plt.title(
+        "Confusion Matrix – ECG5000 mLSTM"
+    )
 
     plt.tight_layout()
     plt.show()
 
 
+# ============================================================
+# MAIN
+# ============================================================
+
 def main():
 
     torch.manual_seed(42)
+    np.random.seed(42)
+
+
+    # --------------------------------------------------------
+    # DEVICE
+    # --------------------------------------------------------
 
     print(
         "CUDA available:",
@@ -231,7 +264,6 @@ def main():
         torch.version.cuda
     )
 
-    ### Device
 
     device = torch.device(
         "cuda"
@@ -239,96 +271,121 @@ def main():
         else "cpu"
     )
 
-    print("Device:", device)
-
-
-    # --------------------------------------------------
-    # LOAD TRAINING DATA
-    # --------------------------------------------------
-
-    train = pd.read_csv(
-        #"data/ECG5000_TRAIN.txt",
-        "dataProcessed/ECG5000_CV_4000.txt",
-        sep=r"\s+",
-        header=None,
+    print(
+        "Device:",
+        device
     )
 
-    X = train.iloc[:, 1:].values
-    y = train.iloc[:, 0].values
 
-    print("Full training data:", X.shape)
-    print("Full training labels:", y.shape)
+    # ========================================================
+    # LOAD DATA
+    # ========================================================
+
+    train_path = "dataProcessed/ECG5000_FOLD_1_TRAIN_3200.txt"
+
+    val_path = "dataProcessed/ECG5000_FOLD_1_800.txt"
+
+    test_path = "dataProcessed/ECG5000_FINAL_TEST_1000.txt"
 
 
-    # --------------------------------------------------
-    # TRAIN / VALIDATION SPLIT
-    # --------------------------------------------------
+    train_data = np.loadtxt(
+        train_path
+    )
 
-    # X_train, X_val, y_train, y_val = train_test_split(
-    #     X,
-    #     y,
-    #     test_size=0.2,
-    #     random_state=42,
-    #     stratify=y,
-    # )
+    val_data = np.loadtxt(
+        val_path
+    )
 
-    print("Training:", X_train.shape)
-    print("Validation:", X_val.shape)
+    test_data = np.loadtxt(
+        test_path
+    )
+
+
+    # --------------------------------------------------------
+    # SEPARATE LABELS AND ECG SIGNALS
+    # --------------------------------------------------------
+
+    # First column = class label
+
+    y_train = train_data[:, 0].astype(int)
+
+    y_val = val_data[:, 0].astype(int)
+
+    y_test = test_data[:, 0].astype(int)
+
+
+    # Remaining 140 columns = ECG waveform
+
+    X_train = train_data[:, 1:]
+
+    X_val = val_data[:, 1:]
+
+    X_test = test_data[:, 1:]
+
 
     print(
-        "X train shape:",
+        "\nTraining:",
         X_train.shape
     )
 
     print(
-        "y train shape:",
-        y_train.shape
+        "Validation:",
+        X_val.shape
+    )
+
+    print(
+        "Test:",
+        X_test.shape
     )
 
 
-    # # Standard Scaling
-    # scaler = StandardScaler()
+    print(
+        "\nTraining labels:",
+        y_train.shape
+    )
 
-    # # Fit scaler only using training data
-    # X_train = scaler.fit_transform(X_train)
+    print(
+        "Validation labels:",
+        y_val.shape
+    )
 
-    # # Use the same scaler for validation and test data
-    # X_val = scaler.transform(X_val)
+    print(
+        "Test labels:",
+        y_test.shape
+    )
 
-    ### Standard Scaling
+
+    # ========================================================
+    # STANDARD SCALING
+    # ========================================================
 
     scaler = StandardScaler()
 
+
     # Fit ONLY using training data
-    train_scaled = scaler.fit_transform(
-        train_signals.reshape(-1, 1)
-    ).reshape(train_signals.shape)
 
-    # Use training scaler on validation and test data
-    val_scaled = scaler.transform(
-        val_signals.reshape(-1, 1)
-    ).reshape(val_signals.shape)
-
-    test_scaled = scaler.transform(
-        test_signals.reshape(-1, 1)
-    ).reshape(test_signals.shape)
+    X_train = scaler.fit_transform(
+        X_train
+    )
 
 
-    ### Add feature dimension for Transformer
+    # Apply the same scaler to validation data
 
-    train_scaled = train_scaled[:, :, np.newaxis]
-    val_scaled = val_scaled[:, :, np.newaxis]
-    test_scaled = test_scaled[:, :, np.newaxis]
+    X_val = scaler.transform(
+        X_val
+    )
 
 
-    print("\nTransformer input shapes:")
-    print("Train:", train_scaled.shape)
-    print("Validation:", val_scaled.shape)
-    print("Test:", test_scaled.shape)
+    # Apply the same scaler to test data
 
-    # --------------------------------------------------
-    # DATASETS
-    # --------------------------------------------------
+    X_test = scaler.transform(
+        X_test
+    )
+
+
+    # ========================================================
+    # CREATE DATASETS
+    # ========================================================
 
     train_dataset = ECGDataset(
         signals=X_train,
@@ -340,14 +397,20 @@ def main():
         labels=y_val,
     )
 
+    test_dataset = ECGDataset(
+        signals=X_test,
+        labels=y_test,
+    )
 
-    # --------------------------------------------------
+
+    # ========================================================
     # CLASS WEIGHTS
-    # --------------------------------------------------
+    # ========================================================
 
     class_counts = np.bincount(
         y_train.astype(int)
     )[1:]
+
 
     class_weights = np.sqrt(
         len(y_train)
@@ -358,19 +421,22 @@ def main():
         )
     )
 
+
     class_weights = np.clip(
         class_weights,
         a_min=None,
         a_max=10.0,
     )
 
+
     class_weights = torch.tensor(
         class_weights,
         dtype=torch.float32,
     ).to(device)
 
+
     print(
-        "Class counts:",
+        "\nClass counts:",
         class_counts
     )
 
@@ -380,45 +446,12 @@ def main():
     )
 
 
-    # --------------------------------------------------
-    # LOAD TEST DATA
-    # --------------------------------------------------
-
-    test = pd.read_csv(
-        #"data/ECG5000_TEST.txt",
-        "dataProcessed/ECG5000_FINAL_TEST_1000.txt",
-        sep=r"\s+",
-        header=None,
-    )
-
-    y_test = test.iloc[:, 0].values
-    X_test = test.iloc[:, 1:].values
-    
-    # Apply the scaler fitted on the training data
-    X_test = scaler.transform(X_test)
-
-    print(
-        "X test shape:",
-        X_test.shape
-    )
-
-    print(
-        "y test shape:",
-        y_test.shape
-    )
-
-
-    test_dataset = ECGDataset(
-        signals=X_test,
-        labels=y_test,
-    )
-
-
-    # --------------------------------------------------
+    # ========================================================
     # DATALOADERS
-    # --------------------------------------------------
+    # ========================================================
 
     batch_size = 32
+
 
     train_loader = DataLoader(
         train_dataset,
@@ -426,11 +459,13 @@ def main():
         shuffle=True,
     )
 
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
     )
+
 
     test_loader = DataLoader(
         test_dataset,
@@ -439,11 +474,14 @@ def main():
     )
 
 
-    # Check one ECG
+    # --------------------------------------------------------
+    # CHECK DATA SHAPES
+    # --------------------------------------------------------
+
     x, y = train_dataset[0]
 
     print(
-        "Individual ECG shape:",
+        "\nIndividual ECG shape:",
         x.shape
     )
 
@@ -453,10 +491,10 @@ def main():
     )
 
 
-    # Check batch
     x_batch, y_batch = next(
         iter(train_loader)
     )
+
 
     print(
         "Batch input shape:",
@@ -469,33 +507,45 @@ def main():
     )
 
 
-    # --------------------------------------------------
-    # INITIALIZE mLSTM MODEL
-    # --------------------------------------------------
+    # ========================================================
+    # mLSTM HYPERPARAMETERS
+    # ========================================================
 
+    # ECG has one feature at each timestep
     input_size = 1
 
-    # Equivalent idea to hidden_size
-    # in your normal LSTM
+
+    # Internal representation dimension
     d_model = 64
 
-    # Start simple:
-    # one mLSTM block
-    num_blocks = 2
 
+    # Number of stacked mLSTM blocks
+    num_blocks = 1
+
+
+    # Number of mLSTM heads
     num_heads = 4
 
+
+    # ECG5000 has five classes
     num_classes = 5
+
 
     # ECG5000 has 140 time steps
     context_length = X_train.shape[1]
 
-    # Local short-term temporal context
+
+    # Local temporal context
     conv1d_kernel_size = 4
 
-    # Q/K/V feature grouping
+
+    # Feature grouping for Q/K/V projections
     qkv_proj_blocksize = 4
 
+
+    # ========================================================
+    # INITIALISE MODEL
+    # ========================================================
 
     model = MLSTMClassifier(
         input_size=input_size,
@@ -509,7 +559,9 @@ def main():
     ).to(device)
 
 
-    ### Number of parameters
+    # --------------------------------------------------------
+    # NUMBER OF PARAMETERS
+    # --------------------------------------------------------
 
     num_params = sum(
         p.numel()
@@ -517,42 +569,50 @@ def main():
         if p.requires_grad
     )
 
+
     print(
-        f"Model has {num_params:,} "
+        f"\nModel has {num_params:,} "
         f"trainable parameters."
     )
 
 
-    # Check output shape
+    # --------------------------------------------------------
+    # CHECK MODEL OUTPUT
+    # --------------------------------------------------------
 
     x_batch = x_batch.to(device)
 
-    outputs = model(x_batch)
+    outputs = model(
+        x_batch
+    )
+
 
     print(
         "Model output shape:",
         outputs.shape
     )
 
-    # Should be:
-    #
+    # Expected:
     # (batch_size, 5)
 
 
-    # --------------------------------------------------
+    # ========================================================
     # LOSS FUNCTION
-    # --------------------------------------------------
+    # ========================================================
 
     criterion = nn.CrossEntropyLoss(
         weight=class_weights
     )
 
+
     y_batch = y_batch.to(device)
+
 
     loss = criterion(
         outputs,
         y_batch,
     )
+
 
     print(
         "Initial loss:",
@@ -560,11 +620,12 @@ def main():
     )
 
 
-    # --------------------------------------------------
+    # ========================================================
     # OPTIMIZER
-    # --------------------------------------------------
+    # ========================================================
 
     learning_rate = 0.0005
+
 
     optimizer = torch.optim.Adam(
         model.parameters(),
@@ -572,154 +633,235 @@ def main():
     )
 
 
-    # --------------------------------------------------
+    # ========================================================
     # TRAINING LOOP
-    # --------------------------------------------------
+    # ========================================================
 
-    epochs = 50
+    epochs = 30
+
 
     train_losses = []
+
     val_losses = []
+
     time_per_epoch = []
+
+
     best_val_loss = float("inf")
+
+    best_val_epoch = 0
 
 
     for epoch in range(epochs):
 
+        # ----------------------------------------------------
+        # START EPOCH TIMER
+        # ----------------------------------------------------
+
         start_time = time.time()
-        ### TRAINING
+
+
+        # ====================================================
+        # TRAINING
+        # ====================================================
 
         model.train()
 
         train_loss = 0.0
 
+
         for x_batch, y_batch in train_loader:
 
             x_batch = x_batch.to(device)
+
             y_batch = y_batch.to(device)
+
 
             optimizer.zero_grad()
 
-            outputs = model(x_batch)
+
+            outputs = model(
+                x_batch
+            )
+
 
             loss = criterion(
                 outputs,
                 y_batch,
             )
 
+
             loss.backward()
 
-            # Same gradient clipping as your LSTM
+
+            # Gradient clipping
             torch.nn.utils.clip_grad_norm_(
                 model.parameters(),
                 max_norm=1.0,
             )
 
+
             optimizer.step()
+
 
             train_loss += loss.item()
 
 
-        train_loss /= len(train_loader)
+        train_loss /= len(
+            train_loader
+        )
+
 
         train_losses.append(
             train_loss
         )
 
 
-        # --------------------------------------------------
+        # ====================================================
         # VALIDATION
-        # --------------------------------------------------
+        # ====================================================
 
         model.eval()
 
         val_loss = 0.0
+
 
         with torch.no_grad():
 
             for x_batch, y_batch in val_loader:
 
                 x_batch = x_batch.to(device)
+
                 y_batch = y_batch.to(device)
+
 
                 outputs = model(
                     x_batch
                 )
+
 
                 loss = criterion(
                     outputs,
                     y_batch,
                 )
 
+
                 val_loss += loss.item()
 
 
-        val_loss /= len(val_loader)
+        val_loss /= len(
+            val_loader
+        )
+
 
         val_losses.append(
             val_loss
         )
 
 
-        # Save best validation model
+        # ====================================================
+        # SAVE BEST MODEL
+        # ====================================================
 
         if val_loss < best_val_loss:
 
             best_val_loss = val_loss
+
+            best_val_epoch = epoch
+
 
             torch.save(
                 model.state_dict(),
                 "best_mlstm_ecg.pth",
             )
 
-        epoch_time = time.time()-start_time
-        time_per_epoch.append(epoch_time)
+
+        # ====================================================
+        # EPOCH TIME
+        # ====================================================
+
+        end_time = time.time()
+
+
+        epoch_time = (
+            end_time
+            - start_time
+        )
+
+
+        time_per_epoch.append(
+            epoch_time
+        )
+
+
+        # ====================================================
+        # PRINT EPOCH RESULTS
+        # ====================================================
 
         print(
             f"Epoch {epoch + 1:3d} | "
             f"Train Loss: {train_loss:.6f} | "
             f"Val Loss: {val_loss:.6f} | "
             f"Best Val Loss: {best_val_loss:.6f} | "
+            f"Best Epoch: {best_val_epoch + 1} | "
             f"Time: {epoch_time:.2f}s"
         )
 
 
+    # ========================================================
+    # AVERAGE TIME PER EPOCH
+    # ========================================================
 
-    average_time_per_epoch = sum(time_per_epoch) / len(time_per_epoch)
+    average_time_per_epoch = (
+        sum(time_per_epoch)
+        / len(time_per_epoch)
+    )
+
 
     print(
         f"\nAverage time per epoch: "
         f"{average_time_per_epoch:.2f} seconds"
     )
 
-    # --------------------------------------------------
-    # PLOT TRAINING
-    # --------------------------------------------------
+
+    # ========================================================
+    # PLOT TRAINING / VALIDATION LOSS
+    # ========================================================
 
     plt.plot(
         train_losses,
         label="Training Loss",
     )
 
+
     plt.plot(
         val_losses,
         label="Validation Loss",
     )
 
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
+
+    plt.xlabel(
+        "Epoch"
+    )
+
+    plt.ylabel(
+        "Loss"
+    )
+
 
     plt.title(
         "mLSTM Training and Validation Loss"
     )
 
+
     plt.legend()
+
     plt.show()
 
 
-    # --------------------------------------------------
+    # ========================================================
     # LOAD BEST MODEL
-    # --------------------------------------------------
+    # ========================================================
 
     best_model = MLSTMClassifier(
         input_size=input_size,
@@ -741,13 +883,15 @@ def main():
     )
 
 
-    # --------------------------------------------------
+    # ========================================================
     # TESTING
-    # --------------------------------------------------
+    # ========================================================
 
     best_model.eval()
 
+
     all_true = []
+
     all_preds = []
 
 
@@ -756,20 +900,25 @@ def main():
         for x_batch, y_batch in test_loader:
 
             x_batch = x_batch.to(device)
+
             y_batch = y_batch.to(device)
+
 
             outputs = best_model(
                 x_batch
             )
+
 
             predicted_classes = torch.argmax(
                 outputs,
                 dim=1,
             )
 
+
             all_true.extend(
                 y_batch.cpu().numpy()
             )
+
 
             all_preds.extend(
                 predicted_classes.cpu().numpy()
@@ -780,19 +929,21 @@ def main():
         all_true
     )
 
+
     all_preds = np.array(
         all_preds
     )
 
 
-    # --------------------------------------------------
+    # ========================================================
     # EVALUATION METRICS
-    # --------------------------------------------------
+    # ========================================================
 
     accuracy = accuracy_score(
         all_true,
         all_preds,
     )
+
 
     precision = precision_score(
         all_true,
@@ -801,12 +952,14 @@ def main():
         zero_division=0,
     )
 
+
     recall = recall_score(
         all_true,
         all_preds,
         average="macro",
         zero_division=0,
     )
+
 
     f1_macro = f1_score(
         all_true,
@@ -817,25 +970,34 @@ def main():
 
 
     print(
-        f"Test Accuracy: {accuracy:.4f}"
+        f"\nTest Accuracy: {accuracy:.4f}"
     )
+
 
     print(
         f"Macro Precision: {precision:.4f}"
     )
 
+
     print(
         f"Macro Recall: {recall:.4f}"
     )
+
 
     print(
         f"Macro F1: {f1_macro:.4f}"
     )
 
 
-    # --------------------------------------------------
+    print(
+        f"Average Time Per Epoch: "
+        f"{average_time_per_epoch:.2f} seconds"
+    )
+
+
+    # ========================================================
     # CONFUSION MATRIX
-    # --------------------------------------------------
+    # ========================================================
 
     plot_confusion_matrix(
         all_true,

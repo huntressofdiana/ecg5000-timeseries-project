@@ -1,14 +1,14 @@
+
+
+
 import numpy as np
 import torch
 from torch import nn
 import matplotlib.pyplot as plt
-
-
 import time
 
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -19,13 +19,18 @@ from sklearn.metrics import (
 )
 
 
-### Dataset
+##################################################
+### DATASET
+##################################################
+
 class ECGDataset(Dataset):
+
     def __init__(
         self,
         signals: np.ndarray,
         labels: np.ndarray,
     ):
+
         self.signals = torch.tensor(
             signals,
             dtype=torch.float32
@@ -40,22 +45,31 @@ class ECGDataset(Dataset):
         return len(self.signals)
 
     def __getitem__(self, idx):
+
         x = self.signals[idx]
         y = self.labels[idx]
 
         return x, y
 
 
-### Positional Encoding
+##################################################
+### POSITIONAL ENCODING
+##################################################
+
 class PositionalEncoding(nn.Module):
+
     def __init__(
         self,
         d_model: int,
         max_len: int = 1000,
     ):
+
         super().__init__()
 
-        pe = torch.zeros(max_len, d_model)
+        pe = torch.zeros(
+            max_len,
+            d_model
+        )
 
         position = torch.arange(
             0,
@@ -64,12 +78,25 @@ class PositionalEncoding(nn.Module):
         ).unsqueeze(1)
 
         div_term = torch.exp(
-            torch.arange(0, d_model, 2).float()
-            * (-torch.log(torch.tensor(10000.0)) / d_model)
+            torch.arange(
+                0,
+                d_model,
+                2
+            ).float()
+            * (
+                -torch.log(
+                    torch.tensor(10000.0)
+                ) / d_model
+            )
         )
 
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe[:, 0::2] = torch.sin(
+            position * div_term
+        )
+
+        pe[:, 1::2] = torch.cos(
+            position * div_term
+        )
 
         pe = pe.unsqueeze(0)
 
@@ -79,13 +106,18 @@ class PositionalEncoding(nn.Module):
         )
 
     def forward(self, x):
+
         x = x + self.pe[:, :x.size(1)]
 
         return x
 
 
-### Transformer Model
+##################################################
+### TRANSFORMER CLASSIFIER
+##################################################
+
 class TransformerClassifier(nn.Module):
+
     def __init__(
         self,
         input_size: int,
@@ -97,24 +129,30 @@ class TransformerClassifier(nn.Module):
         dropout: float,
         n_tokens: int,
     ):
+
         super().__init__()
 
-        # Convert ECG value at each timestep
-        # from input_size = 1
-        # to d_model dimensions
+
+        # Convert each ECG value from
+        # input_size = 1
+        # into d_model dimensions
+
         self.input_projection = nn.Linear(
             input_size,
             d_model
         )
 
-        # Add information about where each ECG value
-        # occurs in the 140 timestep sequence
+
+        # Add timestep position information
+
         self.positional_encoding = PositionalEncoding(
             d_model=d_model,
             max_len=n_tokens
         )
 
-        # One Transformer encoder layer
+
+        # Individual Transformer encoder layer
+
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=n_heads,
@@ -123,36 +161,51 @@ class TransformerClassifier(nn.Module):
             batch_first=True,
         )
 
-        # Stack Transformer encoder layers
+
+        # Stack encoder layers
+
         self.encoder = nn.TransformerEncoder(
             encoder_layer,
             num_layers=num_layers
         )
 
-        # Flatten all 140 contextualised timestep representations
-        # before classification
+
+        # Classification layer
+
         self.output_projection = nn.Linear(
             d_model * n_tokens,
             n_classes
         )
+
 
     def forward(
         self,
         x: torch.Tensor
     ) -> torch.Tensor:
 
+
         # x:
         # (batch_size, 140, 1)
 
-        x_embed = self.input_projection(x)
+
+        ### Input projection
+
+        x_embed = self.input_projection(
+            x
+        )
 
         # (batch_size, 140, d_model)
+
+
+        ### Positional encoding
 
         x_embed_pe = self.positional_encoding(
             x_embed
         )
 
-        # Transformer encoder
+
+        ### Transformer encoder
+
         z = self.encoder(
             x_embed_pe
         )
@@ -160,12 +213,17 @@ class TransformerClassifier(nn.Module):
         # z:
         # (batch_size, 140, d_model)
 
-        # Flatten timestep and feature dimensions
+
+        ### Flatten
+
         z_flat = z.flatten(
             start_dim=1
         )
 
         # (batch_size, 140 * d_model)
+
+
+        ### Classification
 
         logits = self.output_projection(
             z_flat
@@ -176,11 +234,15 @@ class TransformerClassifier(nn.Module):
         return logits
 
 
-### Confusion Matrix
+##################################################
+### CONFUSION MATRIX
+##################################################
+
 def plot_confusion_matrix(
     true_labels: np.ndarray,
     predicted_labels: np.ndarray,
 ):
+
     class_names = [
         "Class 1",
         "Class 2",
@@ -189,19 +251,23 @@ def plot_confusion_matrix(
         "Class 5",
     ]
 
+
     cm = confusion_matrix(
         true_labels,
         predicted_labels
     )
+
 
     display = ConfusionMatrixDisplay(
         confusion_matrix=cm,
         display_labels=class_names,
     )
 
+
     fig, ax = plt.subplots(
         figsize=(8, 6)
     )
+
 
     display.plot(
         ax=ax,
@@ -209,170 +275,241 @@ def plot_confusion_matrix(
         values_format="d",
     )
 
-    plt.xlabel("Predicted class")
-    plt.ylabel("True class")
-    plt.title("ECG5000 Confusion Matrix")
+
+    plt.xlabel(
+        "Predicted class"
+    )
+
+    plt.ylabel(
+        "True class"
+    )
+
+    plt.title(
+        "ECG5000 Confusion Matrix"
+    )
+
     plt.tight_layout()
+
     plt.show()
 
 
+##################################################
+### MAIN
+##################################################
+
 def main():
 
+
+    ##################################################
+    ### RANDOM SEEDS
+    ##################################################
+
     torch.manual_seed(42)
+
     np.random.seed(42)
 
 
-    ### Load Data
+    ##################################################
+    ### LOAD DATA FROM GOOGLE DRIVE
+    ##################################################
 
-    train_path = "dataProcessed/ECG5000_CV_4000.txt"
+    DATA_DIR = "/content/drive/MyDrive/TUBerlin_Data"
 
-    test_path = "dataProcessed/ECG5000_FINAL_TEST_1000.txt"
 
-    train_data = np.loadtxt(
-        train_path
+    train_path = (
+        "dataProcessed/ECG5000_FOLD_2_TRAIN_3200.txt"
     )
 
-    test_data = np.loadtxt(
-        test_path
+    val_path = (
+        "dataProcessed/ECG5000_FOLD_2_VAL_800.txt"
+    )
+
+    test_path = (
+        "dataProcessed/ECG5000_FINAL_TEST_1000.txt"
     )
 
 
-    ### Separate labels and ECG signals
+
+    train_data = np.loadtxt(train_path)
+    val_data = np.loadtxt(val_path)
+    test_data = np.loadtxt(test_path)
+
+
+    print("Train shape:", train_data.shape)
+    print("Validation shape:", val_data.shape)
+    print("Test shape:", test_data.shape)
+
+
+    ##################################################
+    ### SPLIT SIGNALS AND LABELS
+    ##################################################
 
     # First column = class label
+
     train_labels = train_data[:, 0].astype(int)
-
-    # Remaining 140 columns = ECG waveform
-    train_signals = train_data[:, 1:]
-
+    val_labels = val_data[:, 0].astype(int)
     test_labels = test_data[:, 0].astype(int)
 
-    test_signals = test_data[:, 1:]
+
+    # Remaining 140 columns = ECG waveform
+
+    train_signal = train_data[:, 1:]
+
+    val_signal = val_data[:, 1:]
+
+    test_signal = test_data[:, 1:]
 
 
-    ### Convert labels from 1-5 to 0-4
-
-    # CrossEntropyLoss expects class indices
-    # from 0 to number_of_classes - 1
+    ##################################################
+    ### CHANGE LABELS FROM 1-5 TO 0-4
+    ##################################################
 
     train_labels = train_labels - 1
+    val_labels = val_labels - 1
     test_labels = test_labels - 1
 
-
-    print("Training signal shape:")
-    print(train_signals.shape)
-
-    print("Test signal shape:")
-    print(test_signals.shape)
-
-    print("Training labels:")
-    print(np.unique(train_labels, return_counts=True))
+    ##################################################
+    ### CHECK DATA
+    ##################################################
 
 
-    ### Train / Validation Split
+    print("\nTraining signal shape:", train_signal.shape)
+    print("Validation signal shape:", val_signal.shape)
+    print("Final test signal shape:", test_signal.shape)
 
-    train_signals, val_signals, train_labels, val_labels = train_test_split(
-        train_signals,
-        train_labels,
-        test_size=0.2,
-        random_state=42,
-        stratify=train_labels,
-    )
+    print("\nTraining labels shape:", train_labels.shape)
+    print("Validation labels shape:", val_labels.shape)
+    print("Final test labels shape:", test_labels.shape)
 
-    # Gives approximately:
-    #
-    # 3200 training samples
-    # 800 validation samples
-    # 1000 untouched test samples
+    print("\nTraining class counts:")
+    print(np.bincount(train_labels))
+
+    print("\nValidation class counts:")
+    print(np.bincount(val_labels))
+
+    print("\nFinal test class counts:")
+    print(np.bincount(test_labels))
 
 
-    ### Standard Scaling
+    ##################################################
+    ### STANDARD SCALING
+    ##################################################
 
     scaler = StandardScaler()
 
-    # ECG is univariate.
+
+    # Fit scaler ONLY on training data
+    scaler.fit(train_signal)
+
+
+
+    train_signal_scaled = scaler.transform(
+        train_signal
+    ).astype(
+        np.float32
+    )
+
+
+    val_signal_scaled = scaler.transform(
+        val_signal
+    ).astype(
+        np.float32
+    )
+
+
+    test_signal_scaled = scaler.transform(
+        test_signal
+    ).astype(
+        np.float32
+    )
+
+
+    ##################################################
+    ### ADD FEATURE DIMENSION
+    ##################################################
+
+    # Current shape:
     #
-    # Reshape all training ECG points into one column:
+    # (samples, 140)
     #
-    # (3200, 140)
-    #       ↓
-    # (3200*140, 1)
-
-    train_scaled = scaler.fit_transform(
-        train_signals.reshape(-1, 1)
-    ).reshape(train_signals.shape)
-
-    # IMPORTANT:
-    # Validation and test use the SAME scaler
-    # fitted using training data.
-
-    val_scaled = scaler.transform(
-        val_signals.reshape(-1, 1)
-    ).reshape(val_signals.shape)
-
-    test_scaled = scaler.transform(
-        test_signals.reshape(-1, 1)
-    ).reshape(test_signals.shape)
-
-
-    ### Add feature dimension
-
-    # Transformer expects:
+    # Transformer requires:
     #
     # (samples, sequence_length, features)
     #
-    # Currently:
-    # (3200, 140)
+    # Therefore:
     #
-    # We need:
-    # (3200, 140, 1)
-
-    train_scaled = train_scaled[:, :, np.newaxis]
-
-    val_scaled = val_scaled[:, :, np.newaxis]
-
-    test_scaled = test_scaled[:, :, np.newaxis]
+    # (samples, 140, 1)
 
 
-    print("\nTransformer input shapes:")
+    train_signal_scaled = train_signal_scaled[
+        :,
+        :,
+        np.newaxis
+    ]
+
+
+    val_signal_scaled = val_signal_scaled[
+        :,
+        :,
+        np.newaxis
+    ]
+
+
+    test_signal_scaled = test_signal_scaled[
+        :,
+        :,
+        np.newaxis
+    ]
+
+
+    print(
+        "\nTransformer input shapes:"
+    )
 
     print(
         "Train:",
-        train_scaled.shape
+        train_signal_scaled.shape
     )
 
     print(
         "Validation:",
-        val_scaled.shape
+        val_signal_scaled.shape
     )
 
     print(
         "Test:",
-        test_scaled.shape
+        test_signal_scaled.shape
     )
 
 
-    ### Dataset
+    ##################################################
+    ### DATASETS
+    ##################################################
 
     train_dataset = ECGDataset(
-        signals=train_scaled,
+        signals=train_signal_scaled,
         labels=train_labels,
     )
 
+
     val_dataset = ECGDataset(
-        signals=val_scaled,
+        signals=val_signal_scaled,
         labels=val_labels,
     )
 
+
     test_dataset = ECGDataset(
-        signals=test_scaled,
+        signals=test_signal_scaled,
         labels=test_labels,
     )
 
 
-    ### DataLoaders
+    ##################################################
+    ### DATALOADERS
+    ##################################################
 
     batch_size = 32
+
 
     train_loader = DataLoader(
         train_dataset,
@@ -380,11 +517,13 @@ def main():
         shuffle=True,
     )
 
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
     )
+
 
     test_loader = DataLoader(
         test_dataset,
@@ -393,34 +532,32 @@ def main():
     )
 
 
-    ### Transformer Hyperparameters
+    ##################################################
+    ### TRANSFORMER HYPERPARAMETERS
+    ##################################################
 
     input_size = 1
 
-    # Each ECG timestep becomes a 64 dimensional embedding
     d_model = 64
 
-    # Feed-forward network inside Transformer
     dim_ff = 128
 
-    # Number of attention heads
     n_heads = 4
 
-    # Number of stacked Transformer encoder layers
-    num_layers = 1
+    num_layers = 2
 
     dropout = 0.1
 
-    # ECG5000 has 140 timesteps
-    n_tokens = train_scaled.shape[1]
+    n_tokens = train_signal_scaled.shape[1]
 
-    # ECG5000 has 5 classes
     n_classes = 5
 
     learning_rate = 0.0001
 
 
-    ### Device
+    ##################################################
+    ### DEVICE
+    ##################################################
 
     device = torch.device(
         "cuda"
@@ -428,11 +565,24 @@ def main():
         else "cpu"
     )
 
-    print("\nUsing device:")
-    print(device)
+
+    print(
+        "\nUsing device:",
+        device
+    )
 
 
-    ### Initialise Model
+    if torch.cuda.is_available():
+
+        print(
+            "GPU:",
+            torch.cuda.get_device_name(0)
+        )
+
+
+    ##################################################
+    ### INITIALISE MODEL
+    ##################################################
 
     model = TransformerClassifier(
         input_size=input_size,
@@ -443,10 +593,14 @@ def main():
         n_heads=n_heads,
         dropout=dropout,
         n_tokens=n_tokens,
-    ).to(device)
+    ).to(
+        device
+    )
 
 
-    ### Number of parameters
+    ##################################################
+    ### NUMBER OF TRAINABLE PARAMETERS
+    ##################################################
 
     num_params = sum(
         p.numel()
@@ -454,12 +608,15 @@ def main():
         if p.requires_grad
     )
 
+
     print(
-        f"\nModel has {num_params} trainable parameters."
+        f"\nModel has {num_params:,} trainable parameters."
     )
 
 
-    ### Optimiser
+    ##################################################
+    ### OPTIMISER
+    ##################################################
 
     optimizer = torch.optim.Adam(
         model.parameters(),
@@ -467,114 +624,196 @@ def main():
     )
 
 
-    ### Loss Function
+    ##################################################
+    ### LOSS FUNCTION
+    ##################################################
 
     criterion = nn.CrossEntropyLoss()
 
 
-    ### Training
+    ##################################################
+    ### TRAINING SETTINGS
+    ##################################################
 
     epochs = 30
 
 
     train_losses = []
+
     val_losses = []
+
     epoch_times = []
 
 
-    best_val_loss = float("inf")
+    best_val_loss = float(
+        "inf"
+    )
+
     best_val_epoch = 0
 
 
+    ##################################################
+    ### TRAINING LOOP
+    ##################################################
 
-    for epoch in range(epochs):
+    for epoch in range(
+        epochs
+    ):
 
-        ### Training Phase
+
+        ##################################################
+        ### START EPOCH TIMER
+        ##################################################
+
         epoch_start_time = time.time()
+
+
+        ##################################################
+        ### TRAINING PHASE
+        ##################################################
 
         model.train()
 
         train_loss = 0.0
 
+
         for x_batch, y_batch in train_loader:
 
-            x_batch = x_batch.to(device)
 
-            y_batch = y_batch.to(device)
+            x_batch = x_batch.to(
+                device
+            )
+
+            y_batch = y_batch.to(
+                device
+            )
+
 
             optimizer.zero_grad()
+
 
             predictions = model(
                 x_batch
             )
+
 
             loss = criterion(
                 predictions,
                 y_batch
             )
 
+
             loss.backward()
 
+
             optimizer.step()
+
 
             train_loss += loss.item()
 
 
-        train_loss /= len(train_loader)
+        train_loss /= len(
+            train_loader
+        )
+
 
         train_losses.append(
             train_loss
         )
 
 
-        ### Validation Phase
+        ##################################################
+        ### VALIDATION PHASE
+        ##################################################
 
         model.eval()
 
         val_loss = 0.0
 
+
         with torch.no_grad():
+
 
             for x_batch, y_batch in val_loader:
 
-                x_batch = x_batch.to(device)
 
-                y_batch = y_batch.to(device)
+                x_batch = x_batch.to(
+                    device
+                )
+
+                y_batch = y_batch.to(
+                    device
+                )
+
 
                 predictions = model(
                     x_batch
                 )
+
 
                 loss = criterion(
                     predictions,
                     y_batch
                 )
 
+
                 val_loss += loss.item()
 
 
-        val_loss /= len(val_loader)
+        val_loss /= len(
+            val_loader
+        )
+
 
         val_losses.append(
             val_loss
         )
 
 
-        ### Save Best Model
+        ##################################################
+        ### SAVE BEST MODEL
+        ##################################################
 
         if val_loss < best_val_loss:
+
 
             best_val_loss = val_loss
 
             best_val_epoch = epoch
 
+
             torch.save(
                 model.state_dict(),
                 "best_transformer_model.pth"
             )
-        ## epoch time
-        epoch_time = time.time()-epoch_start_time
-        epoch_times.append(epoch_time)
+
+
+        ##################################################
+        ### EPOCH TIME
+        ##################################################
+
+        # Synchronise GPU before stopping timer
+        # so CUDA operations are completed.
+
+        if torch.cuda.is_available():
+
+            torch.cuda.synchronize()
+
+
+        epoch_time = (
+            time.time()
+            - epoch_start_time
+        )
+
+
+        epoch_times.append(
+            epoch_time
+        )
+
+
+        ##################################################
+        ### PRINT EPOCH RESULTS
+        ##################################################
 
         print(
             f"Epoch: {epoch + 1:3d} | "
@@ -582,33 +821,53 @@ def main():
             f"Val loss: {val_loss:.6f} | "
             f"Best Val loss: {best_val_loss:.6f} | "
             f"Best epoch: {best_val_epoch + 1} | "
-            f"Time: {epoch_time: .2f} s"
+            f"Time: {epoch_time:.2f} s"
         )
 
 
-    average_epoch_time = np.mean(epoch_times)
+    ##################################################
+    ### AVERAGE EPOCH TIME
+    ##################################################
 
-    print(
-        f"\nAverage time per epoch: {average_epoch_time:.2f} seconds"
+    average_epoch_time = np.mean(
+        epoch_times
     )
 
-    ### Plot Training and Validation Loss
 
-    plt.figure(figsize=(8, 5))
+    print(
+        f"\nAverage time per epoch: "
+        f"{average_epoch_time:.2f} seconds"
+    )
+
+
+    ##################################################
+    ### PLOT TRAINING / VALIDATION LOSS
+    ##################################################
+
+    plt.figure(
+        figsize=(8, 5)
+    )
+
 
     plt.plot(
         train_losses,
         label="Train Loss"
     )
 
+
     plt.plot(
         val_losses,
         label="Validation Loss"
     )
 
-    plt.xlabel("Epoch")
 
-    plt.ylabel("Cross Entropy Loss")
+    plt.xlabel(
+        "Epoch"
+    )
+
+    plt.ylabel(
+        "Cross Entropy Loss"
+    )
 
     plt.title(
         "Transformer Training and Validation Loss"
@@ -621,7 +880,9 @@ def main():
     plt.show()
 
 
-    ### Load Best Model
+    ##################################################
+    ### LOAD BEST MODEL
+    ##################################################
 
     best_model = TransformerClassifier(
         input_size=input_size,
@@ -632,7 +893,9 @@ def main():
         n_heads=n_heads,
         dropout=dropout,
         n_tokens=n_tokens,
-    ).to(device)
+    ).to(
+        device
+    )
 
 
     best_model.load_state_dict(
@@ -642,33 +905,47 @@ def main():
         )
     )
 
+
     best_model.eval()
 
 
-    ### Test Model
+    ##################################################
+    ### TEST MODEL
+    ##################################################
 
     all_predictions = []
+
     all_targets = []
 
 
     with torch.no_grad():
 
+
         for x_batch, y_batch in test_loader:
 
-            x_batch = x_batch.to(device)
+
+            x_batch = x_batch.to(
+                device
+            )
+
 
             logits = best_model(
                 x_batch
             )
+
 
             predicted_classes = torch.argmax(
                 logits,
                 dim=1
             )
 
+
             all_predictions.extend(
-                predicted_classes.cpu().numpy()
+                predicted_classes
+                .cpu()
+                .numpy()
             )
+
 
             all_targets.extend(
                 y_batch.numpy()
@@ -679,17 +956,21 @@ def main():
         all_predictions
     )
 
+
     all_targets = np.array(
         all_targets
     )
 
 
-    ### Evaluation Metrics
+    ##################################################
+    ### EVALUATION METRICS
+    ##################################################
 
     accuracy = accuracy_score(
         all_targets,
         all_predictions
     )
+
 
     macro_f1 = f1_score(
         all_targets,
@@ -697,28 +978,44 @@ def main():
         average="macro"
     )
 
+
     balanced_accuracy = balanced_accuracy_score(
         all_targets,
         all_predictions
     )
 
 
-    print("\nTest Results")
+    ##################################################
+    ### PRINT TEST RESULTS
+    ##################################################
 
     print(
-        f"Accuracy: {accuracy:.4f}"
-    )
-
-    print(
-        f"Macro F1: {macro_f1:.4f}"
-    )
-
-    print(
-        f"Balanced Accuracy: {balanced_accuracy:.4f}"
+        "\nTest Results"
     )
 
 
-    print("\nClassification Report:")
+    print(
+        f"Accuracy: "
+        f"{accuracy:.4f}"
+    )
+
+
+    print(
+        f"Macro F1: "
+        f"{macro_f1:.4f}"
+    )
+
+
+    print(
+        f"Balanced Accuracy: "
+        f"{balanced_accuracy:.4f}"
+    )
+
+
+    print(
+        "\nClassification Report:"
+    )
+
 
     print(
         classification_report(
@@ -736,7 +1033,9 @@ def main():
     )
 
 
-    ### Confusion Matrix
+    ##################################################
+    ### CONFUSION MATRIX
+    ##################################################
 
     plot_confusion_matrix(
         all_targets,
@@ -745,4 +1044,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
